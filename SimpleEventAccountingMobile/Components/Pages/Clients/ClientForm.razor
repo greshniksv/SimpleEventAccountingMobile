@@ -1,0 +1,103 @@
+﻿@page "/clients/add"
+@page "/clients/edit/{ClientId:guid}"
+@using SimpleEventAccountingMobile.Database.DbModels
+@using SimpleEventAccountingMobile.Database.Interfaces
+
+@inject IMainContext DbContext
+@inject NavigationManager NavigationManager
+
+<PageTitle>@Title</PageTitle>
+
+<h3>@Title</h3>
+
+@if (clientModel == null)
+{
+    <p><em>Загрузка...</em></p>
+}
+else
+{
+    <EditForm Model="@clientModel" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+
+        <div class="mb-3">
+            <label for="name" class="form-label">Имя:</label>
+            <InputText id="name" class="form-control" @bind-Value="clientModel.Name" />
+            <ValidationMessage For="@(() => clientModel.Name)" />
+        </div>
+
+        <div class="mb-3">
+            <label for="birthday" class="form-label">Дата рождения:</label>
+            <InputDate id="birthday" class="form-control" @bind-Value="clientModel.Birthday" />
+            <ValidationMessage For="@(() => clientModel.Birthday)" />
+        </div>
+
+        <div class="mb-3">
+            <label for="comment" class="form-label">Комментарий:</label>
+            <InputTextArea id="comment" class="form-control" @bind-Value="clientModel.Comment" />
+            <ValidationMessage For="@(() => clientModel.Comment)" />
+        </div>
+
+        <hr />
+
+        <button type="submit" class="btn btn-success">Сохранить</button>
+        <button type="button" class="btn btn-secondary" @onclick="Cancel">Отмена</button>
+
+    </EditForm>
+}
+
+
+@code {
+    [Parameter]
+    public Guid ClientId { get; set; }
+
+    private Client? clientModel;
+    private string Title = string.Empty;
+    private bool IsNewClient => ClientId == Guid.Empty;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsNewClient)
+        {
+            Title = "Добавить нового клиента";
+            clientModel = new Client
+            {
+                // Задаем значения по умолчанию
+                Birthday = DateTime.Today
+            };
+        }
+        else
+        {
+            Title = "Редактировать клиента";
+            // Загружаем существующего клиента из БД
+            clientModel = await DbContext.Clients.FindAsync(ClientId);
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (clientModel == null) return;
+
+        if (IsNewClient)
+        {
+            DbContext.Clients.Add(clientModel);
+        }
+        else
+        {
+            // EF Core сам отследит изменения
+            DbContext.Clients.Update(clientModel);
+        }
+
+        await DbContext.SaveChangesAsync();
+        NavigateToList();
+    }
+
+    private void Cancel()
+    {
+        NavigateToList();
+    }
+
+    private void NavigateToList()
+    {
+        NavigationManager.NavigateTo("/clients");
+    }
+}
