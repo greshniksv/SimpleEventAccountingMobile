@@ -12,6 +12,14 @@
 
 <h3>@Title</h3>
 
+<style>
+    .block
+    {
+        padding: 25px;
+    }
+
+</style>
+
 @if (clientModel == null)
 {
     <p><em>Загрузка...</em></p>
@@ -21,53 +29,64 @@ else
     <EditForm Model="@clientModel" OnValidSubmit="HandleValidSubmit">
         <DataAnnotationsValidator />
 
-        <div class="mb-3">
-            <label for="name" class="form-label">Имя:</label>
-            <InputText id="name" class="form-control" @bind-Value="clientModel.Name" />
-            <ValidationMessage For="@(() => clientModel.Name)" />
-        </div>
+        <h4 class="p-3"> Информация </h4>
+        <div class="form-control block">
+        
+            <div class="mb-3">
+                <label for="name" class="form-label">Имя:</label>
+                <InputText id="name" class="form-control" @bind-Value="clientModel.Name" />
+                <ValidationMessage For="@(() => clientModel.Name)" />
+            </div>
 
-        <div class="mb-3">
-            <label for="birthday" class="form-label">Дата рождения:</label>
-            <InputDate id="birthday" class="form-control" @bind-Value="clientModel.Birthday" />
-            <ValidationMessage For="@(() => clientModel.Birthday)" />
-        </div>
+            <div class="mb-3">
+                <label for="birthday" class="form-label">Дата рождения:</label>
+                <InputDate id="birthday" class="form-control" @bind-Value="clientModel.Birthday" />
+                <ValidationMessage For="@(() => clientModel.Birthday)" />
+            </div>
 
-        <div class="mb-3">
-            <label for="comment" class="form-label">Комментарий:</label>
-            <InputTextArea id="comment" class="form-control" @bind-Value="clientModel.Comment" />
-            <ValidationMessage For="@(() => clientModel.Comment)" />
-        </div>
-        
-        <div class="mb-3">
-            <label for="subscription" class="form-label">Есть ли подписка:</label>
-            <InputCheckbox id="subscription" @bind-Value="trainingWallet.Subscription"></InputCheckbox>
-            <ValidationMessage For="@(() => trainingWallet.Subscription)" />
-        </div>
-        
-        <div class="mb-3">
-            <label for="sub_count" class="form-label">Доступно кол-во занятий:</label>
-            <InputNumber id="sub_count" class="form-control" @bind-Value="trainingWallet.Count" ValueConverter="converter" />
-            <ValidationMessage For="@(() => trainingWallet.Count)" />
-        </div>
-        
-        <div class="mb-3">
-            <label for="sub_skip" class="form-label">Доступно пропусков:</label>
-            <InputNumber id="sub_skip" class="form-control" @bind-Value="trainingWallet.Skip" ValueConverter="converter" />
-            <ValidationMessage For="@(() => trainingWallet.Skip)" />
-        </div>
-        
-        <div class="mb-3">
-            <label for="sub_free" class="form-label">Доступно бесплатных:</label>
-            <InputNumber id="sub_free" class="form-control" @bind-Value="trainingWallet.Free" ValueConverter="converter" />
-            <ValidationMessage For="@(() => trainingWallet.Skip)" />
-        </div>
+            <div class="mb-3">
+                <label for="comment" class="form-label">Комментарий:</label>
+                <InputTextArea id="comment" class="form-control" @bind-Value="clientModel.Comment" />
+                <ValidationMessage For="@(() => clientModel.Comment)" />
+            </div>
 
-        <div class="mb-3">
-            <label for="cash" class="form-label">Наличка:</label>
-            <InputNumber id="cash" class="form-control" @bind-Value="cashWallet.Cash" ValueConverter="converter" />
-            <ValidationMessage For="@(() => cashWallet.Cash)" />
         </div>
+        
+        <h4 class="p-3"> Кошелек </h4>
+        <div class="form-control block">
+        
+            <div class="mb-3">
+                <label for="subscription" class="form-label">Есть ли подписка:</label>
+                <InputCheckbox id="subscription" @bind-Value="trainingWallet.Subscription"></InputCheckbox>
+                <ValidationMessage For="@(() => trainingWallet.Subscription)" />
+            </div>
+        
+            <div class="mb-3">
+                <label for="sub_count" class="form-label">Доступно кол-во занятий:</label>
+                <InputNumber id="sub_count" class="form-control" @bind-Value="trainingWallet.Count" ValueConverter="converter" />
+                <ValidationMessage For="@(() => trainingWallet.Count)" />
+            </div>
+        
+            <div class="mb-3">
+                <label for="sub_skip" class="form-label">Доступно пропусков:</label>
+                <InputNumber id="sub_skip" class="form-control" @bind-Value="trainingWallet.Skip" ValueConverter="converter" />
+                <ValidationMessage For="@(() => trainingWallet.Skip)" />
+            </div>
+        
+            <div class="mb-3">
+                <label for="sub_free" class="form-label">Доступно бесплатных:</label>
+                <InputNumber id="sub_free" class="form-control" @bind-Value="trainingWallet.Free" ValueConverter="converter" />
+                <ValidationMessage For="@(() => trainingWallet.Skip)" />
+            </div>
+
+            <div class="mb-3">
+                <label for="cash" class="form-label">Наличка:</label>
+                <InputNumber id="cash" class="form-control" @bind-Value="cashWallet.Cash" ValueConverter="converter" />
+                <ValidationMessage For="@(() => cashWallet.Cash)" />
+            </div>
+
+        </div>
+        
 
         <hr />
 
@@ -87,6 +106,8 @@ else
     private bool IsNewClient => ClientId == Guid.Empty;
     private CashWallet? cashWallet;
     private TrainingWallet? trainingWallet;
+    private CashWallet? cashWalletOld;
+    private TrainingWallet? trainingWalletOld;
 
     private DecimalToLongConverter converter = new();
 
@@ -136,24 +157,70 @@ else
                 clientModel.TrainingWallets.Add(trainingWallet);                
             }
         }
+
+        cashWalletOld = (CashWallet)cashWallet.Clone();
+        trainingWalletOld = (TrainingWallet)trainingWallet.Clone();
     }
 
     private async Task HandleValidSubmit()
     {
         if (clientModel == null) return;
 
+        if (!cashWalletOld.Equals(cashWallet))
+        {
+            await AddCashHistory();
+        }
+
+        if (!trainingWalletOld.Equals(trainingWallet))
+        {
+            await AddTrainingHistory();
+        }
+
         if (IsNewClient)
         {
-            DbContext.Clients.Add(clientModel);
+            await DbContext.Clients.AddAsync(clientModel);
         }
         else
         {
-            // EF Core сам отследит изменения
             DbContext.Clients.Update(clientModel);
         }
 
         await DbContext.SaveChangesAsync();
         NavigateToList();
+    }
+
+    private async Task AddTrainingHistory()
+    {
+        await DbContext.TrainingWalletHistory.AddAsync(new TrainingWalletHistory()
+        {
+            ClientId = ClientId,
+            Skip = trainingWallet?.Skip ?? 0,
+            Count = trainingWallet?.Count ?? 0,
+            Subscription = trainingWallet.Subscription,
+            Free = trainingWallet?.Free ?? 0,
+            Comment = "Ручное изменение",
+            Date = DateTime.Now,
+            TrainingId = null
+        });
+    }
+
+    private decimal GetDelta(decimal? var1, decimal? var2)
+    {
+        var varS1 = var1 ?? 0;
+        var varS2 = var2 ?? 0;
+        return varS1 == varS2 ? varS1 : varS1 - varS2;
+    }
+
+    private async Task AddCashHistory()
+    {
+        await DbContext.CashWalletHistory.AddAsync(new CashWalletHistory()
+        {
+            Cash = cashWallet?.Cash ?? 0,
+            Comment = "Ручное изменение",
+            Date = DateTime.Now,
+            ClientId = ClientId,
+            EventId = null
+        });
     }
 
     private void Cancel()

@@ -1,0 +1,73 @@
+﻿@page "/trainings/{TrainingId:guid}"
+@inject ITrainingService TrainingService
+@using SimpleEventAccountingMobile.Database.DbModels
+@using SimpleEventAccountingMobile.Services.Interfaces
+
+<PageTitle>Детали тренировки</PageTitle>
+
+<h3>Детали тренировки</h3>
+
+@if (training == null)
+{
+    <p><em>Загрузка...</em></p>
+}
+else
+{
+    <div>
+        <h4>@training.Name</h4>
+        <p><strong>Описание:</strong> @training.Description</p>
+        <p><strong>Дата проведения:</strong> @training.Date.ToString("dd.MM.yyyy HH:mm")</p>
+    </div>
+
+    <h4>Участники тренировки</h4>
+    @if (participants == null)
+    {
+        <p><em>Загрузка участников...</em></p>
+    }
+    else if (!participants.Any())
+    {
+        <p>Нет участников.</p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Имя клиента</th>
+                <th>Дата участия</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var participant in participants)
+            {
+                <tr>
+                    <td>@participant.Client.Name</td>
+                    <td>@participant.Date.ToString("dd.MM.yyyy HH:mm")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+
+    <NavLink href="/trainings">← Назад к списку тренировок</NavLink>
+}
+
+@code {
+    [Parameter]
+    public Guid TrainingId { get; set; }
+
+    private Training? training;
+    private List<TrainingWalletHistory>? participants;
+
+    protected override async Task OnInitializedAsync()
+    {
+        training = await TrainingService.GetTrainingByIdAsync(TrainingId);
+        if (training != null)
+        {
+            participants = training.TrainingWalletHistory
+                ?.Where(th => th.Date <= training.Date)
+                .OrderBy(th => th.Date)
+                .ToList();
+        }
+    }
+}

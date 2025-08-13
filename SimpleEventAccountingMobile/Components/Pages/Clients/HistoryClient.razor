@@ -1,0 +1,159 @@
+﻿@page "/clients/history/{ClientId:guid}"
+@using SimpleEventAccountingMobile.Database.DbModels
+@using SimpleEventAccountingMobile.Database.Interfaces
+@using Microsoft.EntityFrameworkCore
+@inject IMainContext DbContext
+@inject NavigationManager NavigationManager
+
+<PageTitle>История клиента</PageTitle>
+
+<style>
+    .history-section {
+        margin-bottom: 30px;
+    }
+
+    .table-info td {
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+
+    .back-button {
+        margin-bottom: 20px;
+    }
+</style>
+
+<h1>История клиента</h1>
+
+@if (client == null)
+{
+    <p><em>Загрузка...</em></p>
+}
+else
+{
+    <div class="back-button">
+        <button class="btn btn-secondary" @onclick="GoBack">
+            <span class="bi bi-arrow-left" aria-hidden="true"></span> Назад к списку клиентов
+        </button>
+    </div>
+
+    <h2>@client.Name</h2>
+
+    <div class="history-section">
+        <h3>История наличных операций</h3>
+        @if (cashHistory == null)
+        {
+            <p><em>Загрузка истории наличных операций...</em></p>
+        }
+        else if (!cashHistory.Any())
+        {
+            <p><em>Нет записей о наличных операциях.</em></p>
+        }
+        else
+        {
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Сумма</th>
+                        <th>Комментарий</th>
+                        <th>Событие</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var entry in cashHistory.OrderByDescending(e => e.Date))
+                    {
+                        <tr>
+                            <td>@entry.Date.ToString("dd.MM.yyyy HH:mm")</td>
+                            <td>@entry.Cash.ToString("C")</td>
+                            <td>@entry.Comment</td>
+                            <td>@(entry.Event?.Name ?? "Без события")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+
+    <div class="history-section">
+        <h3>История тренировочных операций</h3>
+        @if (trainingHistory == null)
+        {
+            <p><em>Загрузка истории тренировочных операций...</em></p>
+        }
+        else if (!trainingHistory.Any())
+        {
+            <p><em>Нет записей о тренировочных операциях.</em></p>
+        }
+        else
+        {
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Трен</th>
+                        <th>Проп</th>
+                        <th>Бесп</th>
+                        <th>Подп</th>
+                        <th>Коме</th>
+                        <th>Тренировка</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var entry in trainingHistory.OrderByDescending(e => e.Date))
+                    {
+                        <tr>
+                            <td>@entry.Date.ToString("dd.MM.yyyy HH:mm")</td>
+                            <td>@entry.Count</td>
+                            <td>@entry.Skip</td>
+                            <td>@entry.Free</td>
+                            <td>@(entry.Subscription ? "Да" : "Нет")</td>
+                            <td>@entry.Comment</td>
+                            <td>@(entry.Training?.Name ?? "Без тренировки")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid ClientId { get; set; }
+
+    private Client? client;
+    private List<CashWalletHistory>? cashHistory;
+    private List<TrainingWalletHistory>? trainingHistory;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Загрузка клиента
+        client = await DbContext.Clients
+            .FirstOrDefaultAsync(c => c.Id == ClientId && !c.Deleted);
+
+        if (client == null)
+        {
+            // Если клиент не найден, можно перенаправить обратно или показать сообщение
+            // Здесь просто возвращаемся назад
+            NavigationManager.NavigateTo("/clients");
+            return;
+        }
+
+        // Загрузка истории наличных операций
+        cashHistory = await DbContext.CashWalletHistory
+            .Where(h => h.ClientId == ClientId)
+            .Include(h => h.Event) // Предполагается, что у вас есть навигационное свойство Event
+            .ToListAsync();
+
+        // Загрузка истории тренировочных операций
+        trainingHistory = await DbContext.TrainingWalletHistory
+            .Where(h => h.ClientId == ClientId)
+            .Include(h => h.Training) // Предполагается, что есть навигационное свойство Training
+            .ToListAsync();
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/clients");
+    }
+}

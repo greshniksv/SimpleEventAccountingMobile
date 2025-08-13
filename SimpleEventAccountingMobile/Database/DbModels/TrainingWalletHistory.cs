@@ -10,7 +10,7 @@ namespace SimpleEventAccountingMobile.Database.DbModels
 
 		public Client? Client { get; set; }
 
-		public Guid TrainingId { get; set; }
+		public Guid? TrainingId { get; set; }
 
 		public Training? Training { get; set; }
 
@@ -20,7 +20,12 @@ namespace SimpleEventAccountingMobile.Database.DbModels
 
 		public decimal Skip { get; set; }
 
-		public bool Subscription { get; set; }
+        /// <summary>
+        /// Сколько есть бесплатных занятий
+        /// </summary>
+        public decimal Free { get; set; }
+
+        public bool Subscription { get; set; }
 
 		[MaxLength(1000)]
 		public string? Comment { get; set; }

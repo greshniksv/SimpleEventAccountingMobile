@@ -1,0 +1,143 @@
+﻿@page "/conduct-training"
+@inject ITrainingService TrainingService
+@using System.ComponentModel.DataAnnotations
+@using SimpleEventAccountingMobile.Database.DbModels
+@using SimpleEventAccountingMobile.Services.Interfaces
+@using SimpleEventAccountingMobile.Components.Shared
+@using MudBlazor
+
+<PageTitle>Провести тренировку</PageTitle>
+
+<h3>Провести тренировку</h3>
+
+@if (isLoading)
+{
+    <p><em>Загрузка клиентов...</em></p>
+}
+else
+{
+    <EditForm Model="newTraining" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">
+                @errorMessage
+            </div>
+        }
+
+        <div class="mb-3">
+            <label class="form-label">Название тренировки</label>
+            <InputText @bind-Value="newTraining.Name" class="form-control" />
+            <ValidationMessage For="@(() => newTraining.Name)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Описание тренировки</label>
+            <InputTextArea @bind-Value="newTraining.Description" class="form-control" />
+            <ValidationMessage For="@(() => newTraining.Description)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Дата проведения</label>
+            <InputDate @bind-Value="newTraining.Date" class="form-control" />
+            <ValidationMessage For="@(() => newTraining.Date)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Выберите клиентов</label>
+            <MultiSelect TItem="Client" Items="clientItems" SelectedItems="selectedClients" 
+                         ItemTextSelector="@(c => c.Name ?? "Без имени")" 
+                         ItemValueSelector="@(c => c.Id)" 
+                         SelectedItemsChanged="OnSelectedItemsChanged" />
+            
+
+        </div>
+
+        <button type="submit" class="btn btn-primary">Провести тренировку</button>
+    </EditForm>
+}
+
+@code {
+    private NewTrainingModel newTraining = new NewTrainingModel();
+    private List<Client> clients = new();
+    private List<Client> subscribedClients = new();
+    private List<Client> selectedClients = new();
+    private List<Client> clientItems = new();
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    private string selValue;
+    private List<string> selectedStrClients = new();
+
+    [Inject]
+    public NavigationManager NavigationManager { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            clients = await TrainingService.GetClientsAsync();
+            subscribedClients = await TrainingService.GetSubscribedClientsAsync();
+
+            // Добавляем автоматически подписанных клиентов в выбранные
+            var subscribedClientIds = subscribedClients.Select(c => c.Id).ToList();
+            selectedClients.AddRange(clients.Where(c => subscribedClientIds.Contains(c.Id)));
+            clientItems = clients.ToList();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Ошибка при загрузке клиентов: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            // Объединяем выбранных клиентов и подписанных (уже в selectedClients)
+            var finalClientIds = selectedClients.Select(c => c.Id).Distinct().ToList();
+
+            var training = new Training
+            {
+                Name = newTraining.Name,
+                Description = newTraining.Description,
+                Date = newTraining.Date,
+                Deleted = false
+            };
+
+            await TrainingService.ConductTrainingAsync(training, finalClientIds);
+
+            // Перенаправление
+            NavigationManager.NavigateTo("/trainings");
+        }
+        catch (Exception ex)
+        {
+            // Логируем и показываем сообщение об ошибке
+            errorMessage = $"Ошибка при проведении тренировки: {ex.Message}";
+        }
+    }
+
+    private Task OnSelectedItemsChanged(List<Client> selected)
+    {
+        selectedClients = selected;
+        return Task.CompletedTask;
+    }
+
+    // Модель для формы
+    public class NewTrainingModel
+    {
+        [Required(ErrorMessage = "Название тренировки обязательно.")]
+        public string? Name { get; set; }
+
+        public string? Description { get; set; }
+
+        [Required(ErrorMessage = "Дата проведения обязательна.")]
+        public DateTime Date { get; set; } = DateTime.Now;
+    }
+}

@@ -12,7 +12,7 @@ namespace SimpleEventAccountingMobile.Database.DbModels
 
 		public DateTime Date { get; set; }
 
-		public Guid EventId { get; set; }
+		public Guid? EventId { get; set; }
 
 		public Event? Event { get; set; }
 

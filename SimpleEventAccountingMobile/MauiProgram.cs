@@ -1,7 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using MudBlazor.Services;
 using SimpleEventAccountingMobile.Database.DbContexts;
 using SimpleEventAccountingMobile.Database.Interfaces;
+using SimpleEventAccountingMobile.Services;
+using SimpleEventAccountingMobile.Services.Interfaces;
 
 namespace SimpleEventAccountingMobile
 {
@@ -18,10 +21,12 @@ namespace SimpleEventAccountingMobile
                 });
 
             builder.Services.AddMauiBlazorWebView();
+            builder.Services.AddMudServices();
 
             builder.Services.AddDbContext<MainContext>(opt =>
                 opt.UseSqlite("Filename=default.sqlite"));
             builder.Services.AddScoped<IMainContext, MainContext>();
+            builder.Services.AddScoped<ITrainingService, TrainingService>();
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();

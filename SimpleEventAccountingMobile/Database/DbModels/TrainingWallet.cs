@@ -1,7 +1,6 @@
 ﻿
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System.ComponentModel.DataAnnotations;
 
 namespace SimpleEventAccountingMobile.Database.DbModels
 {
@@ -15,19 +14,16 @@ namespace SimpleEventAccountingMobile.Database.DbModels
         /// <summary>
         /// Сколько есть теренровок
         /// </summary>
-        [DisplayFormat(DataFormatString = "{0:0}")]
         public decimal Count { get; set; }
 
         /// <summary>
         /// Сколько есть пропусков
         /// </summary>
-        [DisplayFormat(DataFormatString = "{0:0}")]
         public decimal Skip { get; set; }
 
         /// <summary>
         /// Сколько есть бесплатных занятий
         /// </summary>
-        [DisplayFormat(DataFormatString = "{0:0}")]
         public decimal Free { get; set; }
 
 		/// <summary>
@@ -39,6 +35,70 @@ namespace SimpleEventAccountingMobile.Database.DbModels
 		/// Удалено
 		/// </summary>
 		public  bool Deleted {  get; set; }
+
+        // Реализация ICloneable
+        public object Clone()
+        {
+            TrainingWallet clone = new TrainingWallet
+            {
+                // Копируем все свойства
+                Id = Id,
+                ClientId = ClientId,
+                Count = Count,
+                Skip = Skip,
+                Free = Free,
+                Subscription = Subscription,
+                Deleted = Deleted,
+                Client = null
+            };
+
+            return clone;
+        }
+
+        // Реализация IEquatable
+        public bool Equals(TrainingWallet? other)
+        {
+            if (other == null)
+                return false;
+
+            if (ReferenceEquals(this, other))
+                return true;
+
+            return
+                Id == other.Id &&
+                ClientId == other.ClientId &&
+                Count == other.Count &&
+                Skip == other.Skip &&
+                Free == other.Free &&
+                Subscription == other.Subscription &&
+                Deleted == other.Deleted;
+        }
+
+        // Переопределение Object.Equals
+        public override bool Equals(object? obj)
+        {
+            if (obj is TrainingWallet wallet)
+                return Equals(wallet);
+            return false;
+        }
+
+        // Переопределение GetHashCode
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                int hash = 17;
+                hash = hash * 23 + Id.GetHashCode();
+                hash = hash * 23 + ClientId.GetHashCode();
+                hash = hash * 23 + Count.GetHashCode();
+                hash = hash * 23 + Skip.GetHashCode();
+                hash = hash * 23 + Free.GetHashCode();
+                hash = hash * 23 + Subscription.GetHashCode();
+                hash = hash * 23 + Deleted.GetHashCode();
+
+                return hash;
+            }
+        }
 
         public static void Configure(ModelBuilder builder)
             => Configure(builder.Entity<TrainingWallet>());

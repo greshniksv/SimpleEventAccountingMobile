@@ -1,0 +1,177 @@
+﻿@using System.Diagnostics
+@typeparam TItem
+
+<div class="multi-select-container" @onfocusout="HandleFocusOut" tabindex="0">
+    <!-- Блок для отображения выбранных элементов -->
+    <div class="selected-items-container" @onclick="FocusSearchInput">
+        @if (SelectedItems.Any())
+        {
+            @foreach (var item in SelectedItems)
+            {
+                <span class="selected-item">
+                    @ItemTextSelector(item)
+                    <button type="button" class="remove-button" aria-label="Удалить" @onclick="() => RemoveItem(item)">
+                        &times;
+                    </button>
+                </span>
+            }
+        }
+        else
+        {
+            <span class="placeholder-text">Выберите элементы...</span>
+        }
+    </div>
+
+    <!-- Строка поиска -->
+    <input 
+        @ref="searchInput" 
+        type="text" 
+        class="search-input" 
+        placeholder="Поиск..." 
+        @bind="searchTerm" 
+        @oninput="OnSearchInput" 
+        @onfocus="ShowDropdown" 
+    />
+
+    <!-- Выпадающий список -->
+    @if (showDropdown)
+    {
+        <div class="dropdown-menu show" @onmouseenter="ShowDropdown">
+            @if (filteredItems.Any())
+            {
+                @foreach (var item in filteredItems)
+                {
+                    <div class="dropdown-item d-flex align-items-center" @onclick="() => ToggleSelection(item)">
+                        <input 
+                            type="checkbox" 
+                            class="form-check-input me-2" 
+                            checked="@IsSelected(item)" 
+                            disabled 
+                        />
+                        <span>@ItemTextSelector(item)</span>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="dropdown-item">Ничего не найдено.</div>
+            }
+        </div>
+    }
+
+</div>
+
+@code {
+    [Parameter]
+    public List<TItem> Items { get; set; } = new();
+
+    [Parameter]
+    public List<TItem> SelectedItems { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<List<TItem>> SelectedItemsChanged { get; set; }
+
+    [Parameter]
+    public Func<TItem, string> ItemTextSelector { get; set; } = item => item.ToString();
+
+    [Parameter]
+    public Func<TItem, object> ItemValueSelector { get; set; } = item => item;
+
+    private string searchTerm = string.Empty;
+    private List<TItem> filteredItems = new();
+    private bool showDropdown = false;
+    private ElementReference searchInput;
+    private Task? menuTask;
+    private CancellationTokenSource source = new();
+
+    protected override void OnInitialized()
+    {
+        FilterItems();
+    }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? string.Empty;
+        FilterItems();
+        ShowDropdown();
+    }
+
+    private void FilterItems()
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            filteredItems = Items.ToList();
+        }
+        else
+        {
+            filteredItems = Items.Where(item => ItemTextSelector(item).Contains(searchTerm, StringComparison.OrdinalIgnoreCase)).ToList();
+        }
+    }
+
+    private bool IsSelected(TItem item)
+    {
+        return SelectedItems.Contains(item);
+    }
+
+    private void ToggleSelection(TItem item)
+    {
+        if (IsSelected(item))
+        {
+            SelectedItems.Remove(item);
+        }
+        else
+        {
+            SelectedItems.Add(item);
+        }
+        SelectedItemsChanged.InvokeAsync(SelectedItems);
+    }
+
+    private void RemoveItem(TItem item)
+    {
+        if (SelectedItems.Contains(item))
+        {
+            SelectedItems.Remove(item);
+            SelectedItemsChanged.InvokeAsync(SelectedItems);
+        }
+    }
+
+    private void ShowDropdown()
+    {
+        if (menuTask != null && menuTask.Status != TaskStatus.WaitingForActivation)
+        {
+            source.Cancel();
+            source = new CancellationTokenSource();
+        }
+
+        showDropdown = true;
+    }
+
+    private void HideDropdown()
+    {
+        showDropdown = false;
+    }
+
+    private void HandleFocusOut(FocusEventArgs e)
+    {
+        if (menuTask != null && menuTask.Status != TaskStatus.WaitingForActivation)
+        {
+            source.Cancel();
+            source = new CancellationTokenSource();
+        }
+
+        var token = source.Token;
+        // Задержка для обработки кликов внутри dropdown
+        menuTask = Task.Run(async () =>
+        {
+            await Task.Delay(200, token);
+            token.ThrowIfCancellationRequested();
+            await InvokeAsync(() => HideDropdown());
+        }, token);
+    }
+
+    private void FocusSearchInput()
+    {
+        // Устанавливаем фокус на строку поиска при клике на контейнер выбранных элементов
+        searchInput.FocusAsync();
+    }
+}
