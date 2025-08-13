@@ -1,6 +1,7 @@
 ﻿
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System.ComponentModel.DataAnnotations;
 
 namespace SimpleEventAccountingMobile.Database.DbModels
 {
@@ -11,20 +12,23 @@ namespace SimpleEventAccountingMobile.Database.DbModels
 
 		public Client? Client { get; set; }
 
-		/// <summary>
-		/// Сколько есть теренровок
-		/// </summary>
-		public decimal Count { get; set; }
+        /// <summary>
+        /// Сколько есть теренровок
+        /// </summary>
+        [DisplayFormat(DataFormatString = "{0:0}")]
+        public decimal Count { get; set; }
 
-		/// <summary>
-		/// Сколько есть пропусков
-		/// </summary>
-		public decimal Skip { get; set; }
+        /// <summary>
+        /// Сколько есть пропусков
+        /// </summary>
+        [DisplayFormat(DataFormatString = "{0:0}")]
+        public decimal Skip { get; set; }
 
-		/// <summary>
-		/// Сколько есть бесплатных занятий
-		/// </summary>
-		public decimal Free { get; set; }
+        /// <summary>
+        /// Сколько есть бесплатных занятий
+        /// </summary>
+        [DisplayFormat(DataFormatString = "{0:0}")]
+        public decimal Free { get; set; }
 
 		/// <summary>
 		/// Адонемент

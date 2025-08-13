@@ -1,5 +1,7 @@
 ﻿@page "/clients/add"
 @page "/clients/edit/{ClientId:guid}"
+@using Microsoft.EntityFrameworkCore
+@using SimpleEventAccountingMobile.Converters
 @using SimpleEventAccountingMobile.Database.DbModels
 @using SimpleEventAccountingMobile.Database.Interfaces
 
@@ -36,6 +38,36 @@ else
             <InputTextArea id="comment" class="form-control" @bind-Value="clientModel.Comment" />
             <ValidationMessage For="@(() => clientModel.Comment)" />
         </div>
+        
+        <div class="mb-3">
+            <label for="subscription" class="form-label">Есть ли подписка:</label>
+            <InputCheckbox id="subscription" @bind-Value="trainingWallet.Subscription"></InputCheckbox>
+            <ValidationMessage For="@(() => trainingWallet.Subscription)" />
+        </div>
+        
+        <div class="mb-3">
+            <label for="sub_count" class="form-label">Доступно кол-во занятий:</label>
+            <InputNumber id="sub_count" class="form-control" @bind-Value="trainingWallet.Count" ValueConverter="converter" />
+            <ValidationMessage For="@(() => trainingWallet.Count)" />
+        </div>
+        
+        <div class="mb-3">
+            <label for="sub_skip" class="form-label">Доступно пропусков:</label>
+            <InputNumber id="sub_skip" class="form-control" @bind-Value="trainingWallet.Skip" ValueConverter="converter" />
+            <ValidationMessage For="@(() => trainingWallet.Skip)" />
+        </div>
+        
+        <div class="mb-3">
+            <label for="sub_free" class="form-label">Доступно бесплатных:</label>
+            <InputNumber id="sub_free" class="form-control" @bind-Value="trainingWallet.Free" ValueConverter="converter" />
+            <ValidationMessage For="@(() => trainingWallet.Skip)" />
+        </div>
+
+        <div class="mb-3">
+            <label for="cash" class="form-label">Наличка:</label>
+            <InputNumber id="cash" class="form-control" @bind-Value="cashWallet.Cash" ValueConverter="converter" />
+            <ValidationMessage For="@(() => cashWallet.Cash)" />
+        </div>
 
         <hr />
 
@@ -53,6 +85,10 @@ else
     private Client? clientModel;
     private string Title = string.Empty;
     private bool IsNewClient => ClientId == Guid.Empty;
+    private CashWallet? cashWallet;
+    private TrainingWallet? trainingWallet;
+
+    private DecimalToLongConverter converter = new();
 
     protected override async Task OnParametersSetAsync()
     {
@@ -64,12 +100,41 @@ else
                 // Задаем значения по умолчанию
                 Birthday = DateTime.Today
             };
+
+            cashWallet = new CashWallet();
+            trainingWallet = new TrainingWallet();
+
+            clientModel.CashWallets ??= new List<CashWallet>();
+            clientModel.CashWallets.Add(cashWallet);
+
+            clientModel.TrainingWallets ??= new List<TrainingWallet>();
+            clientModel.TrainingWallets.Add(trainingWallet);
         }
         else
         {
             Title = "Редактировать клиента";
             // Загружаем существующего клиента из БД
-            clientModel = await DbContext.Clients.FindAsync(ClientId);
+            clientModel = await DbContext.Clients
+                .Include(x => x.TrainingWallets)
+                .Include(x => x.CashWallets)
+                .FirstOrDefaultAsync(x => x.Id == ClientId);
+
+            cashWallet = clientModel.CashWallets.FirstOrDefault();
+            trainingWallet = clientModel.TrainingWallets.FirstOrDefault();
+
+            if (cashWallet == null)
+            {
+                cashWallet ??= new CashWallet();
+                clientModel.CashWallets ??= new List<CashWallet>();
+                clientModel.CashWallets.Add(cashWallet);
+            }
+
+            if (trainingWallet == null)
+            {
+                trainingWallet ??= new TrainingWallet();
+                clientModel.TrainingWallets ??= new List<TrainingWallet>();
+                clientModel.TrainingWallets.Add(trainingWallet);                
+            }
         }
     }
 

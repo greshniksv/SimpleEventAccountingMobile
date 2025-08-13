@@ -1,6 +1,7 @@
 ﻿
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System.ComponentModel.DataAnnotations;
 
 namespace SimpleEventAccountingMobile.Database.DbModels
 {
@@ -10,7 +11,8 @@ namespace SimpleEventAccountingMobile.Database.DbModels
 
 		public Client? Client { get; set; }
 
-		public decimal Cash { get; set; }
+        [DisplayFormat(DataFormatString = "{0:0}")]
+        public decimal Cash { get; set; }
 
 		public bool Deleted { get; set; }
 

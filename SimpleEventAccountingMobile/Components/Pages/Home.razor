@@ -1,5 +1,24 @@
 ﻿@page "/"
+@inject NavigationManager NavigationManager
 
-<h1>Hello, world!</h1>
+<PageTitle>Главная</PageTitle>
 
-Welcome to your new app.
+<div class="hero-container">
+    <div class="hero-content">
+        <h1 class="hero-title">Simple Event Accounting</h1>
+        <p class="hero-subtitle">
+            Ваш надежный помощник для учета событий и клиентов.
+        </p>
+        <button class="btn btn-primary btn-lg hero-cta-button" @onclick="GoToClients">
+            Начать работу
+            <span class="oi oi-arrow-right" aria-hidden="true"></span>
+        </button>
+    </div>
+</div>
+
+@code {
+    private void GoToClients()
+    {
+        NavigationManager.NavigateTo("/clients");
+    }
+}

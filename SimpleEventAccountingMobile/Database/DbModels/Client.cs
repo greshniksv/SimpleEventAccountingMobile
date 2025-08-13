@@ -24,7 +24,9 @@ namespace SimpleEventAccountingMobile.Database.DbModels
 
 		public ICollection<TrainingWalletHistory>? TrainingWalletHistory { get; set; }
 
-		public ICollection<EventClient>? EventClients { get; set; }
+        public ICollection<CashWalletHistory>? CashWalletHistory { get; set; }
+
+        public ICollection<EventClient>? EventClients { get; set; }
 
         public static void Configure(ModelBuilder builder)
             => Configure(builder.Entity<Client>());
@@ -58,6 +60,12 @@ namespace SimpleEventAccountingMobile.Database.DbModels
 
             builder
                 .HasMany(e => e.TrainingWalletHistory)
+                .WithOne(e => e.Client)
+                .HasForeignKey(e => e.ClientId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder
+                .HasMany(e => e.CashWalletHistory)
                 .WithOne(e => e.Client)
                 .HasForeignKey(e => e.ClientId)
                 .OnDelete(DeleteBehavior.NoAction);
