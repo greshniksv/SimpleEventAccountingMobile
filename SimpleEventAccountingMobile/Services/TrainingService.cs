@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using SimpleEventAccountingMobile.Database.DbContexts;
 using SimpleEventAccountingMobile.Database.DbModels;
 using SimpleEventAccountingMobile.Database.Interfaces;
+using SimpleEventAccountingMobile.Dtos;
 using SimpleEventAccountingMobile.Services.Interfaces;
 
 namespace SimpleEventAccountingMobile.Services
@@ -38,6 +38,26 @@ namespace SimpleEventAccountingMobile.Services
                 .ToListAsync();
         }
 
+        public async Task<List<TrainingDebtClient>> GetTrainingDebtClientsAsync()
+        {
+            return await _dbContext.TrainingWallets
+                .Where(tw => tw.Count < 0 && !tw.Deleted && tw.Client != null && !tw.Client.Deleted)
+                .Include(tw => tw.Client)
+                .Select(tw => new TrainingDebtClient(tw.Client, tw.Count))
+                .Distinct()
+                .ToListAsync();
+        }
+
+        public async Task<List<CashDebtClient>> GetCashDebtClientsAsync()
+        {
+            return await _dbContext.CashWallets
+                .Where(tw => tw.Cash < 0 && !tw.Deleted && tw.Client != null && !tw.Client.Deleted)
+                .Include(tw => tw.Client)
+                .Select(tw => new CashDebtClient(tw.Client, tw.Cash))
+                .Distinct()
+                .ToListAsync() ?? new List<CashDebtClient>();
+        }
+
         public async Task<List<Client>> GetSubscribedClientsAsync()
         {
             return await _dbContext.TrainingWallets
@@ -51,7 +71,7 @@ namespace SimpleEventAccountingMobile.Services
 
         public async Task ConductTrainingAsync(Training training, List<Guid> clientIds)
         {
-            using var transaction = await _dbContext.GetDatabase().BeginTransactionAsync();
+            await using var transaction = await _dbContext.GetDatabase().BeginTransactionAsync();
 
             try
             {
@@ -59,20 +79,82 @@ namespace SimpleEventAccountingMobile.Services
                 training.Deleted = false;
                 _dbContext.Trainings.Add(training);
 
-                // Добавляем записи в TrainingWalletHistory
+                var walletsWithSubscription = await _dbContext.TrainingWallets.Where(x => x.Subscription).ToListAsync();
+                var wallets = await _dbContext.TrainingWallets.Where(x => clientIds.Contains(x.ClientId)).ToListAsync();
+                var notIn = walletsWithSubscription.Select(x => x.ClientId).Where(x => !clientIds.Contains(x));
+
+                /*
+                 * Если есть подписка
+                 *   Если есть клиент присутствует - списываем Count
+                 *   Если отсутствует - списываем Skip, если есть, а если нет списываем Count
+                 * Если подписки нет
+                 *   Если есть Free - списываем
+                 *   Если есть Skip - списываем
+                 *   Если есть Count - списываем
+                 */
+
+                // Списываем из кошелька и добавляем записи в TrainingWalletHistory
+                foreach (var clientId in notIn)
+                {
+                    var wallet = wallets.First(x => x.ClientId == clientId);
+
+                    if (wallet.Skip > 0)
+                    {
+                        wallet.Skip--;
+                    }
+                    else
+                    {
+                        wallet.Count--;
+                    }
+                }
+                
                 foreach (var clientId in clientIds)
                 {
+                    var isSubscription = walletsWithSubscription.Any(x => x.ClientId == clientId);
+                    var wallet = wallets.First(x => x.ClientId == clientId);
+
+                    if (isSubscription)
+                    {
+                        if (wallet.Skip > 0)
+                        {
+                            wallet.Skip--;
+                        }
+                        else
+                        {
+                            wallet.Count--;
+                        }
+                    }
+                    else
+                    {
+                        if (wallet.Free > 0)
+                        {
+                            wallet.Free--;
+                        }
+                        else
+                        {
+                            wallet.Count--;
+                        }
+                    }
+
+                    if (wallet.Count == 0)
+                    {
+                        wallet.Subscription = false;
+                    }
+
+                    _dbContext.TrainingWallets.Update(wallet);
+
                     var history = new TrainingWalletHistory
                     {
                         ClientId = clientId,
                         TrainingId = training.Id,
                         Date = training.Date,
-                        Count = 1, // или другое логика подсчета
-                        Skip = 0,  // предполагается изменения, если необходимо
-                        Free = 0,  // аналогично
-                        Subscription = false, // или другая логика
+                        Count = wallet.Count,
+                        Skip = wallet.Skip,
+                        Free = wallet.Free,
+                        Subscription = wallet.Subscription,
                         Comment = $"Участие в тренировке {training.Name}"
                     };
+
                     _dbContext.TrainingWalletHistory.Add(history);
                 }
 

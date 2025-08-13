@@ -16,12 +16,17 @@
         
         <button class="btn btn-primary btn-lg hero-cta-button" @onclick="GoToTrainings">
             <span class="bi bi-universal-access" aria-hidden="true"></span>
-            Тренеровки
+            Тренировки
         </button>
         
         <button class="btn btn-primary btn-lg hero-cta-button" @onclick="GoToConductTraining">
             <span class="bi bi-universal-access-circle" aria-hidden="true"></span>
-            Провести тренеровку
+            Провести тренировку
+        </button>
+        
+        <button class="btn btn-primary btn-lg hero-cta-button" @onclick="GoToDebtors">
+            <span class="bi bi-universal-access-circle" aria-hidden="true"></span>
+            Задолженности
         </button>
     </div>
 </div>
@@ -41,4 +46,10 @@
     {
         NavigationManager.NavigateTo("/trainings");
     }
+
+    private void GoToDebtors()
+    {
+        NavigationManager.NavigateTo("/debtors");
+    }
+    
 }

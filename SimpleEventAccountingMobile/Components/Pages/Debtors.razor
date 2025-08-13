@@ -1,0 +1,83 @@
+﻿@page "/debtors"
+@using SimpleEventAccountingMobile.Dtos
+@using SimpleEventAccountingMobile.Services.Interfaces
+@inject ITrainingService TrainingService
+
+<PageTitle>Страница Должников</PageTitle>
+
+<div class="container mt-4">
+    <h2>Должники по Тренировкам</h2>
+
+    @if (trainingDebtors == null)
+    {
+        <p>Загрузка должников по тренировкам...</p>
+    }
+    else if (!trainingDebtors.Any())
+    {
+        <p>Нет должников по тренировкам.</p>
+    }
+    else
+    {
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Имя Клиента</th>
+                    <th>Количество Долга</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var debtor in trainingDebtors)
+                {
+                    <tr>
+                        <td>@debtor.Client.Name</td>
+                        <td>@debtor.Count</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    <hr />
+
+    <h2>Должники по Наличке</h2>
+
+    @if (cashDebtors == null)
+    {
+        <p>Загрузка должников по наличке...</p>
+    }
+    else if (!cashDebtors.Any())
+    {
+        <p>Нет должников по наличке.</p>
+    }
+    else
+    {
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Имя Клиента</th>
+                    <th>Сумма Долга</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var debtor in cashDebtors)
+                {
+                    <tr>
+                        <td>@debtor.Client.Name</td>
+                        <td>@debtor.Cash.ToString("C")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    private List<TrainingDebtClient> trainingDebtors;
+    private List<CashDebtClient> cashDebtors;
+
+    protected override async Task OnInitializedAsync()
+    {
+        trainingDebtors = await TrainingService.GetTrainingDebtClientsAsync();
+        cashDebtors = await TrainingService.GetCashDebtClientsAsync();
+    }
+}
