@@ -79,9 +79,13 @@ namespace SimpleEventAccountingMobile.Services
                 training.Deleted = false;
                 _dbContext.Trainings.Add(training);
 
-                var walletsWithSubscription = await _dbContext.TrainingWallets.Where(x => x.Subscription).ToListAsync();
-                var wallets = await _dbContext.TrainingWallets.Where(x => clientIds.Contains(x.ClientId)).ToListAsync();
-                var notIn = walletsWithSubscription.Select(x => x.ClientId).Where(x => !clientIds.Contains(x));
+                var clientWithSubscription = await _dbContext.TrainingWallets
+                    .Where(x => x.Subscription).Select(x=>x.ClientId).ToListAsync();
+
+                var wallets = await _dbContext.TrainingWallets
+                    .Where(x => clientIds.Contains(x.ClientId) || clientWithSubscription.Contains(x.ClientId)).ToListAsync();
+
+                var notIn = clientWithSubscription.Where(x => !clientIds.Contains(x));
 
                 /*
                  * Если есть подписка
@@ -110,7 +114,7 @@ namespace SimpleEventAccountingMobile.Services
                 
                 foreach (var clientId in clientIds)
                 {
-                    var isSubscription = walletsWithSubscription.Any(x => x.ClientId == clientId);
+                    var isSubscription = clientWithSubscription.Any(x => x == clientId);
                     var wallet = wallets.First(x => x.ClientId == clientId);
 
                     if (isSubscription)

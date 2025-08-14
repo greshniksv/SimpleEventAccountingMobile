@@ -1,0 +1,106 @@
+﻿@using SimpleEventAccountingMobile.Database.DbModels
+@inject IJSRuntime JSRuntime
+
+<Modal @bind-IsVisible="IsVisible">
+    <div class="modal-header">
+        <h5 class="modal-title">Добавить Клиента</h5>
+        <button type="button" class="btn-close" aria-label="Close" @onclick="Close"></button>
+    </div>
+    <div class="modal-body">
+        <InputText @bind-Value="SearchTerm" placeholder="Поиск по имени..." class="form-control mb-3" />
+        @if (isLoading)
+        {
+            <p><em>Загрузка клиентов...</em></p>
+        }
+        else
+        {
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Имя</th>
+                        <th>Действие</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (filteredClients.Any())
+                    {
+                        @foreach (var client in filteredClients)
+                        {
+                            <tr>
+                                <td>@client.Name</td>
+                                <td>
+                                    <button class="btn btn-sm btn-primary" @onclick="() => SelectClient(client)">
+                                        <span class="bi bi-plus-square" aria-hidden="true"></span>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="3">Нет клиентов, соответствующих поиску.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</Modal>
+
+@code {
+    [Parameter]
+    public bool IsVisible { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> IsVisibleChanged { get; set; }
+
+    [Parameter]
+    public List<Client> AvailableClients { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<Client> OnClientSelected { get; set; }
+
+    private string SearchTerm { get; set; } = string.Empty;
+    private List<Client> filteredClients = new();
+    private bool isLoading = false;
+
+    protected override void OnParametersSet()
+    {
+        FilterClients();
+    }
+
+    private void FilterClients()
+    {
+        if (string.IsNullOrWhiteSpace(SearchTerm))
+        {
+            filteredClients = AvailableClients;
+        }
+        else
+        {
+            filteredClients = AvailableClients
+                .Where(c => c.Name != null && c.Name.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+    }
+
+    private void Close()
+    {
+        IsVisible = false;
+        IsVisibleChanged.InvokeAsync(IsVisible);
+    }
+
+    private async Task SelectClient(Client client)
+    {
+        await OnClientSelected.InvokeAsync(client);
+        Close();
+    }
+
+    private void OnSearchTermChanged(ChangeEventArgs e)
+    {
+        SearchTerm = e.Value?.ToString() ?? string.Empty;
+        FilterClients();
+    }
+
+    // Add debounce for better performance if necessary
+}

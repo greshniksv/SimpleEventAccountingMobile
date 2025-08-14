@@ -12,6 +12,8 @@
 
 <h3>@Title</h3>
 
+<hr />
+
 <style>
     .block
     {
@@ -168,12 +170,14 @@ else
 
         if (!cashWalletOld.Equals(cashWallet))
         {
-            await AddCashHistory();
+            clientModel.CashWalletHistory ??= new List<CashWalletHistory>();
+            clientModel.CashWalletHistory.Add(GetCashHistory());
         }
 
         if (!trainingWalletOld.Equals(trainingWallet))
         {
-            await AddTrainingHistory();
+            clientModel.TrainingWalletHistory ??= new List<TrainingWalletHistory>();
+            clientModel.TrainingWalletHistory.Add(GetTrainingHistory());
         }
 
         if (IsNewClient)
@@ -189,11 +193,10 @@ else
         NavigateToList();
     }
 
-    private async Task AddTrainingHistory()
+    private TrainingWalletHistory GetTrainingHistory()
     {
-        await DbContext.TrainingWalletHistory.AddAsync(new TrainingWalletHistory()
+        return new TrainingWalletHistory()
         {
-            ClientId = ClientId,
             Skip = trainingWallet?.Skip ?? 0,
             Count = trainingWallet?.Count ?? 0,
             Subscription = trainingWallet.Subscription,
@@ -201,26 +204,18 @@ else
             Comment = "Ручное изменение",
             Date = DateTime.Now,
             TrainingId = null
-        });
+        };
     }
 
-    private decimal GetDelta(decimal? var1, decimal? var2)
+    private CashWalletHistory GetCashHistory()
     {
-        var varS1 = var1 ?? 0;
-        var varS2 = var2 ?? 0;
-        return varS1 == varS2 ? varS1 : varS1 - varS2;
-    }
-
-    private async Task AddCashHistory()
-    {
-        await DbContext.CashWalletHistory.AddAsync(new CashWalletHistory()
+        return new CashWalletHistory()
         {
             Cash = cashWallet?.Cash ?? 0,
             Comment = "Ручное изменение",
             Date = DateTime.Now,
-            ClientId = ClientId,
             EventId = null
-        });
+        };
     }
 
     private void Cancel()

@@ -1,0 +1,33 @@
+﻿@page "/error"
+
+@inject NavigationManager Navigation
+@using System.Diagnostics
+
+<PageTitle>Ошибка</PageTitle>
+
+<div class="error-page">
+    <h1>Что-то пошло не так.</h1>
+    <p>Извините за неудобства. Попробуйте перезагрузить приложение или свяжитесь с поддержкой.</p>
+
+    @if (ShowDetailedError)
+    {
+        <div class="error-details">
+            <h2>Детали ошибки:</h2>
+            <pre>@ErrorMessage</pre>
+        </div>
+    }
+
+    <button @onclick="ToggleErrorDetails">Показать/Скрыть детали ошибки</button>
+</div>
+
+@code {
+    [Parameter]
+    public string ErrorMessage { get; set; }
+
+    private bool ShowDetailedError { get; set; } = false;
+
+    private void ToggleErrorDetails()
+    {
+        ShowDetailedError = !ShowDetailedError;
+    }
+}

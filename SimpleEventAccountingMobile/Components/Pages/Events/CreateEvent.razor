@@ -1,0 +1,199 @@
+﻿@page "/create-event"
+@using System.ComponentModel.DataAnnotations
+@using SimpleEventAccountingMobile.Database.DbModels
+@using SimpleEventAccountingMobile.Services.Interfaces
+@using SimpleEventAccountingMobile.Components.Shared
+@inject IEventService EventService
+@inject IClientService ClientService
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+
+<PageTitle>Создать событие</PageTitle>
+
+<h3>Создать событие</h3>
+
+<EditForm Model="newEventModel" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">
+            @errorMessage
+        </div>
+    }
+
+    <div class="mb-3">
+        <label class="form-label">Название события</label>
+        <InputText @bind-Value="newEventModel.Name" class="form-control" />
+        <ValidationMessage For="@(() => newEventModel.Name)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Описание события</label>
+        <InputTextArea @bind-Value="newEventModel.Description" class="form-control" />
+        <ValidationMessage For="@(() => newEventModel.Description)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Дата события</label>
+        <InputDate @bind-Value="newEventModel.Date" class="form-control" />
+        <ValidationMessage For="@(() => newEventModel.Date)" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Стоимость события (Price)</label>
+        <InputNumber @bind-Value="newEventModel.Price" class="form-control" />
+        <ValidationMessage For="@(() => newEventModel.Price)" />
+    </div>
+
+    <div class="mb-3">
+        <h5>Участники события</h5>
+        @if (selectedClients.Any())
+        {
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Имя</th>
+                        <th>Дата рождения</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var client in selectedClients)
+                    {
+                        <tr>
+                            <td>@client.Name</td>
+                            <td>@client.Birthday.ToString("dd.MM.yyyy")</td>
+                            <td>
+                                <button class="btn btn-danger btn-sm" @onclick="() => RemoveClient(client)">Удалить</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            <p>Нет добавленных клиентов.</p>
+        }
+
+        <button class="btn btn-secondary" @onclick="ShowAddClientModal">Добавить Клиента</button>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Создать событие</button>
+</EditForm>
+
+<AddClientPopup IsVisible="@isAddClientModalVisible"
+               IsVisibleChanged="OnAddClientModalChanged"
+               AvailableClients="availableClientsForAddition"
+               OnClientSelected="AddClientToSelectedClients" />
+
+@code {
+    private NewEventModel newEventModel = new();
+    private List<Client> allClients = new();
+    private List<Client> selectedClients = new();
+    private List<Client> availableClientsForAddition = new();
+    private bool isAddClientModalVisible = false;
+    private string? errorMessage;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            allClients = await ClientService.GetAllClientsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Ошибка при загрузке клиентов: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void ShowAddClientModal()
+    {
+        isAddClientModalVisible = true;
+        // Определяем доступных для добавления клиентов (не добавленные)
+        availableClientsForAddition = allClients
+            .Where(c => !selectedClients.Any(sc => sc.Id == c.Id))
+            .ToList();
+    }
+
+    private void OnAddClientModalChanged(bool visible)
+    {
+        isAddClientModalVisible = visible;
+    }
+
+    private async Task AddClientToSelectedClients(Client client)
+    {
+        if (!selectedClients.Any(c => c.Id == client.Id))
+        {
+            selectedClients.Add(client);
+        }
+
+        // Обновляем доступных клиентов
+        availableClientsForAddition = availableClientsForAddition
+            .Where(c => c.Id != client.Id)
+            .ToList();
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void RemoveClient(Client client)
+    {
+        selectedClients.Remove(client);
+        // Возвращаем клиента в список доступных для добавления
+        availableClientsForAddition.Add(client);
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (selectedClients == null || !selectedClients.Any())
+        {
+            errorMessage = "Необходимо выбрать хотя бы одного клиента для события.";
+            return;
+        }
+
+        try
+        {
+            var clientIds = selectedClients.Select(c => c.Id).ToList();
+            var newEvent = new Event
+            {
+                Name = newEventModel.Name,
+                Description = newEventModel.Description,
+                Date = newEventModel.Date,
+                Price = newEventModel.Price,
+                Deleted = false
+            };
+
+            await EventService.CreateEventAsync(newEvent, clientIds);
+
+            // Переход на страницу событий после успешного создания
+            NavigationManager.NavigateTo("/events");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Ошибка при создании события: {ex.Message}";
+        }
+    }
+
+    // Модель для формы создания события
+    public class NewEventModel
+    {
+        [Required(ErrorMessage = "Название события обязательно.")]
+        public string? Name { get; set; }
+
+        public string? Description { get; set; }
+
+        [Required(ErrorMessage = "Дата события обязательна.")]
+        public DateTime Date { get; set; } = DateTime.Now;
+
+        [Required(ErrorMessage = "Стоимость события обязательна.")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Стоимость должна быть положительной.")]
+        public decimal Price { get; set; }
+    }
+}

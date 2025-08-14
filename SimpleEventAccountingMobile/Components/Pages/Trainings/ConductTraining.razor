@@ -4,11 +4,12 @@
 @using SimpleEventAccountingMobile.Database.DbModels
 @using SimpleEventAccountingMobile.Services.Interfaces
 @using SimpleEventAccountingMobile.Components.Shared
-@using MudBlazor
 
 <PageTitle>Провести тренировку</PageTitle>
 
 <h3>Провести тренировку</h3>
+
+<hr />
 
 @if (isLoading)
 {
@@ -46,30 +47,72 @@ else
         </div>
 
         <div class="mb-3">
-            <label class="form-label">Выберите клиентов</label>
-            <MultiSelect TItem="Client" Items="clientItems" SelectedItems="selectedClients" 
-                         ItemTextSelector="@(c => c.Name ?? "Без имени")" 
-                         ItemValueSelector="@(c => c.Id)" 
-                         SelectedItemsChanged="OnSelectedItemsChanged" />
-            
+            <h5>Клиенты с подпиской</h5>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>*</th>
+                        <th>Имя</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var selectableClient in selectableSubscribedClients)
+                    {
+                        <tr>
+                            <td>
+                                <InputCheckbox @bind-Value="selectableClient.IsSelected" />
+                            </td>
+                            <td>@selectableClient.Client.Name</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
 
+        <div class="mb-3">
+            <h5>Дополнительные клиенты</h5>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Имя</th>
+                        <th>Действие</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var client in addedClients)
+                    {
+                        <tr>
+                            <td>@client.Name</td>
+                            <td>
+                                <button class="btn btn-sm btn-danger" @onclick="() => RemoveAddedClient(client)">Удалить</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <button class="btn btn-secondary" @onclick="ShowAddClientModal">Добавить Клиента</button>
         </div>
 
         <button type="submit" class="btn btn-primary">Провести тренировку</button>
     </EditForm>
 }
 
+<AddClientPopup IsVisible="@isAddClientModalVisible"
+                IsVisibleChanged="OnAddClientModalChanged"
+                AvailableClients="availableClientsForAddition"
+                OnClientSelected="AddClientToAddedClients" />
+
 @code {
     private NewTrainingModel newTraining = new NewTrainingModel();
     private List<Client> clients = new();
     private List<Client> subscribedClients = new();
-    private List<Client> selectedClients = new();
-    private List<Client> clientItems = new();
+    private List<Client> addedClients = new();
+    private List<SelectableClient> selectableSubscribedClients = new();
     private bool isLoading = true;
     private string? errorMessage;
 
-    private string selValue;
-    private List<string> selectedStrClients = new();
+    private bool isAddClientModalVisible = false;
+    private List<Client> availableClientsForAddition = new();
 
     [Inject]
     public NavigationManager NavigationManager { get; set; } = default!;
@@ -81,10 +124,12 @@ else
             clients = await TrainingService.GetClientsAsync();
             subscribedClients = await TrainingService.GetSubscribedClientsAsync();
 
-            // Добавляем автоматически подписанных клиентов в выбранные
-            var subscribedClientIds = subscribedClients.Select(c => c.Id).ToList();
-            selectedClients.AddRange(clients.Where(c => subscribedClientIds.Contains(c.Id)));
-            clientItems = clients.ToList();
+            // Инициализируем selectableSubscribedClients
+            selectableSubscribedClients = subscribedClients.Select(c => new SelectableClient
+            {
+                Client = c,
+                IsSelected = false
+            }).ToList();
         }
         catch (Exception ex)
         {
@@ -96,12 +141,58 @@ else
         }
     }
 
+    private void ShowAddClientModal()
+    {
+        isAddClientModalVisible = true;
+        // Определяем доступных для добавления клиентов (не подписанные и не добавленные)
+        availableClientsForAddition = clients
+            .Where(c => !subscribedClients.Any(sc => sc.Id == c.Id) && !addedClients.Any(ac => ac.Id == c.Id))
+            .ToList();
+    }
+
+    private void OnAddClientModalChanged(bool visible)
+    {
+        isAddClientModalVisible = visible;
+    }
+
+    private async Task AddClientToAddedClients(Client client)
+    {
+        if (!addedClients.Any(c => c.Id == client.Id))
+        {
+            addedClients.Add(client);
+        }
+
+        // Дополнительно, вы можете обновить список доступных клиентов
+        availableClientsForAddition = availableClientsForAddition.Where(c => c.Id != client.Id).ToList();
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void RemoveAddedClient(Client client)
+    {
+        addedClients.Remove(client);
+        // Возвращаем клиента в список доступных для добавления
+        if (!subscribedClients.Any(sc => sc.Id == client.Id))
+        {
+            availableClientsForAddition.Add(client);
+        }
+    }
+
     private async Task HandleValidSubmit()
     {
         try
         {
-            // Объединяем выбранных клиентов и подписанных (уже в selectedClients)
-            var finalClientIds = selectedClients.Select(c => c.Id).Distinct().ToList();
+            // Собираем выбранных подписанных клиентов
+            var selectedSubscribedClientIds = selectableSubscribedClients
+                .Where(c => c.IsSelected)
+                .Select(c => c.Client.Id)
+                .ToList();
+
+            // Собираем добавленных клиентов
+            var addedClientIds = addedClients.Select(c => c.Id).ToList();
+
+            // Объединяем списки
+            var finalClientIds = selectedSubscribedClientIds.Union(addedClientIds).Distinct().ToList();
 
             var training = new Training
             {
@@ -123,12 +214,6 @@ else
         }
     }
 
-    private Task OnSelectedItemsChanged(List<Client> selected)
-    {
-        selectedClients = selected;
-        return Task.CompletedTask;
-    }
-
     // Модель для формы
     public class NewTrainingModel
     {
@@ -139,5 +224,12 @@ else
 
         [Required(ErrorMessage = "Дата проведения обязательна.")]
         public DateTime Date { get; set; } = DateTime.Now;
+    }
+
+    // Вспомогательная модель
+    public class SelectableClient
+    {
+        public Client Client { get; set; }
+        public bool IsSelected { get; set; }
     }
 }

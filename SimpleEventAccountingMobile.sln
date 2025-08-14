@@ -15,6 +15,7 @@ Global
 		{815021E9-ED1C-48CC-9672-5F759CAFD740}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{815021E9-ED1C-48CC-9672-5F759CAFD740}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{815021E9-ED1C-48CC-9672-5F759CAFD740}.Release|Any CPU.Build.0 = Release|Any CPU
+		{815021E9-ED1C-48CC-9672-5F759CAFD740}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

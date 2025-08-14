@@ -1,0 +1,97 @@
+﻿@page "/view-event/{EventId:guid}"
+@using SimpleEventAccountingMobile.Database.DbModels
+@using SimpleEventAccountingMobile.Services.Interfaces
+@inject IEventService EventService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Просмотр события</PageTitle>
+
+<h3>Просмотр события</h3>
+
+@if (isLoading)
+{
+    <p><em>Загрузка события...</em></p>
+}
+else if (errorMessage != null)
+{
+    <div class="alert alert-danger">
+        @errorMessage
+    </div>
+}
+else if (ev == null)
+{
+    <p>Событие не найдено.</p>
+}
+else
+{
+    <div class="mb-3">
+        <strong>Название:</strong> @ev.Name
+    </div>
+    <div class="mb-3">
+        <strong>Описание:</strong> @ev.Description
+    </div>
+    <div class="mb-3">
+        <strong>Дата:</strong> @ev.Date.ToString("dd.MM.yyyy")
+    </div>
+    <div class="mb-3">
+        <strong>Стоимость:</strong> @ev.Price.ToString("C")
+    </div>
+
+    <h5>Участники события</h5>
+    @if (ev.EventClients != null && ev.EventClients.Any())
+    {
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Имя</th>
+                    <th>Дата рождения</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var ec in ev.EventClients)
+                {
+                    <tr>
+                        <td>@ec.Client.Name</td>
+                        <td>@ec.Client.Birthday.ToString("dd.MM.yyyy")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>Нет участников события.</p>
+    }
+
+    <button class="btn btn-secondary" @onclick="GoBack">Назад</button>
+}
+
+@code {
+    [Parameter]
+    public Guid EventId { get; set; }
+
+    private Event? ev;
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            ev = await EventService.GetEventByIdAsync(EventId);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Ошибка при загрузке события: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/events");
+    }
+}

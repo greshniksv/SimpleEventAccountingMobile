@@ -1,0 +1,78 @@
+﻿@page "/events"
+@using SimpleEventAccountingMobile.Database.DbModels
+@using SimpleEventAccountingMobile.Services.Interfaces
+@inject IEventService EventService
+@inject NavigationManager NavigationManager
+
+<PageTitle>События</PageTitle>
+
+<h3>События</h3>
+
+@if (isLoading)
+{
+    <p><em>Загрузка событий...</em></p>
+}
+else if (events == null || !events.Any())
+{
+    <p>Нет прошедших событий.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>Название</th>
+            <th>Дата</th>
+            <th>Стоимость</th>
+            <th>Действия</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var ev in events)
+        {
+            <tr>
+                <td>@ev.Name</td>
+                <td>@ev.Date.ToString("dd.MM.yyyy")</td>
+                <td>@ev.Price.ToString("C")</td>
+                <td>
+                    <button class="btn btn-primary btn-sm" @onclick="() => ViewEvent(ev.Id)">Просмотр события</button>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+<button class="btn btn-success" @onclick="CreateNewEvent">Создать новое событие</button>
+
+@code {
+    private List<Event>? events;
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            events = await EventService.GetPastEventsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Ошибка при загрузке событий: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void CreateNewEvent()
+    {
+        NavigationManager.NavigateTo("/create-event");
+    }
+
+    private void ViewEvent(Guid eventId)
+    {
+        NavigationManager.NavigateTo($"/view-event/{eventId}");
+    }
+}

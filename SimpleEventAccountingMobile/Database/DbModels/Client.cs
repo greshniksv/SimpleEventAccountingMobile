@@ -16,7 +16,7 @@ namespace SimpleEventAccountingMobile.Database.DbModels
 
 		public bool Deleted { get; set; }
 
-		public ICollection<TrainingWallet>? TrainingWallets { get; set; }
+        public ICollection<TrainingWallet>? TrainingWallets { get; set; }
 
 		public ICollection<CashWallet>? CashWallets { get; set; }
 

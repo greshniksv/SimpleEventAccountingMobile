@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Diagnostics;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using MudBlazor.Services;
 using SimpleEventAccountingMobile.Database.DbContexts;
 using SimpleEventAccountingMobile.Database.Interfaces;
 using SimpleEventAccountingMobile.Services;
@@ -21,12 +21,19 @@ namespace SimpleEventAccountingMobile
                 });
 
             builder.Services.AddMauiBlazorWebView();
-            builder.Services.AddMudServices();
 
+            var path = Path.Combine(FileSystem.AppDataDirectory, "SimpleEventAccountingMobile.db3");
             builder.Services.AddDbContext<MainContext>(opt =>
-                opt.UseSqlite("Filename=default.sqlite"));
+                opt.UseSqlite($"Data Source={path}"));
+
             builder.Services.AddScoped<IMainContext, MainContext>();
             builder.Services.AddScoped<ITrainingService, TrainingService>();
+            builder.Services.AddScoped<IClientService, ClientService>();
+            builder.Services.AddScoped<IEventService, EventService>();
+
+            // Добавьте глобальный обработчик не перехваченных исключений
+            AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+            TaskScheduler.UnobservedTaskException += OnTaskSchedulerUnobservedTaskException;
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();
@@ -41,6 +48,28 @@ namespace SimpleEventAccountingMobile
 
             // 3. Возвращаем собранное приложение
             return app;
+        }
+
+        private static void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            // Логирование ошибки (опционально)
+            var exception = e.ExceptionObject as Exception;
+            Debug.WriteLine($"Unhandled Exception: {exception?.Message}\n{exception?.StackTrace}");
+
+            // Перенаправление на страницу ошибок
+            // Возможно, потребуется доступ к NavigationManager
+
+            // В этом контексте сложно напрямую использовать NavigationManager,
+            // поэтому можно рассмотреть использование службы или навигации через MessageBus.
+        }
+
+        private static void OnTaskSchedulerUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
+        {
+            // Логирование ошибки (опционально)
+            Debug.WriteLine($"Unobserved Task Exception: {e.Exception.Message}\n{e.Exception.StackTrace}");
+
+            // Помечаем как обработанную
+            e.SetObserved();
         }
 
         private static void ApplyMigrations(IServiceProvider services)
@@ -63,7 +92,7 @@ namespace SimpleEventAccountingMobile
             catch (Exception ex)
             {
                 // Здесь можно залогировать ошибку, если миграция не удалась
-                Console.WriteLine($"An error occurred while migrating the database: {ex.Message}");
+                Debug.WriteLine($"An error occurred while migrating the database: {ex.Message}");
                 // В реальном приложении используйте систему логирования
             }
         }
