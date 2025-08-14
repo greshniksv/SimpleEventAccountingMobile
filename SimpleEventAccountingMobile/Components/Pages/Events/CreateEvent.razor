@@ -12,7 +12,7 @@
 
 <h3>Создать событие</h3>
 
-<EditForm Model="newEventModel" OnValidSubmit="HandleValidSubmit">
+<EditForm Model="newEventModel" > @*  OnValidSubmit="HandleValidSubmit"> *@
     <DataAnnotationsValidator />
     <ValidationSummary />
 
@@ -66,7 +66,9 @@
                             <td>@client.Name</td>
                             <td>@client.Birthday.ToString("dd.MM.yyyy")</td>
                             <td>
-                                <button class="btn btn-danger btn-sm" @onclick="() => RemoveClient(client)">Удалить</button>
+                                <button class="btn btn-danger btn-sm button-icon" @onclick="() => RemoveClient(client)">
+                                    <span class="bi bi-minus-square" aria-hidden="true"></span>
+                                </button>
                             </td>
                         </tr>
                     }
@@ -81,7 +83,7 @@
         <button class="btn btn-secondary" @onclick="ShowAddClientModal">Добавить Клиента</button>
     </div>
 
-    <button type="submit" class="btn btn-primary">Создать событие</button>
+    <button type="submit" class="btn btn-primary" @onclick="HandleValidSubmit">Создать событие</button>
 </EditForm>
 
 <AddClientPopup IsVisible="@isAddClientModalVisible"

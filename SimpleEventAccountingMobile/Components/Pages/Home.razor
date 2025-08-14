@@ -13,11 +13,17 @@
             <span class="bi bi-people" aria-hidden="true"></span>
             Клиенты
         </button>
-        
+
+        <button class="btn btn-primary btn-lg hero-cta-button mt-2" @onclick="GoToCreateEvent">
+            <span class="bi bi-universal-access-circle" aria-hidden="true"></span>
+            Провести событие
+        </button>
+
         <button class="btn btn-primary btn-lg hero-cta-button mt-2" @onclick="GoToConductTraining">
             <span class="bi bi-universal-access-circle" aria-hidden="true"></span>
             Провести тренировку
         </button>
+       
     </div>
 </div>
 
@@ -32,14 +38,9 @@
         NavigationManager.NavigateTo("/conduct-training");
     }
 
-    private void GoToTrainings()
+    private void GoToCreateEvent()
     {
-        NavigationManager.NavigateTo("/trainings");
-    }
-
-    private void GoToDebtors()
-    {
-        NavigationManager.NavigateTo("/debtors");
+        NavigationManager.NavigateTo("/create-event");
     }
     
 }

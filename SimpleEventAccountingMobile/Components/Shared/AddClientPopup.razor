@@ -29,7 +29,7 @@
                             <tr>
                                 <td>@client.Name</td>
                                 <td>
-                                    <button class="btn btn-sm btn-primary" @onclick="() => SelectClient(client)">
+                                    <button class="btn btn-sm btn-primary button-icon" @onclick="() => SelectClient(client)">
                                         <span class="bi bi-plus-square" aria-hidden="true"></span>
                                     </button>
                                 </td>
@@ -39,7 +39,7 @@
                     else
                     {
                         <tr>
-                            <td colspan="3">Нет клиентов, соответствующих поиску.</td>
+                            <td colspan="2">Нет клиентов, соответствующих поиску.</td>
                         </tr>
                     }
                 </tbody>
@@ -101,6 +101,4 @@
         SearchTerm = e.Value?.ToString() ?? string.Empty;
         FilterClients();
     }
-
-    // Add debounce for better performance if necessary
 }

@@ -84,7 +84,9 @@ else
                         <tr>
                             <td>@client.Name</td>
                             <td>
-                                <button class="btn btn-sm btn-danger" @onclick="() => RemoveAddedClient(client)">Удалить</button>
+                                <button class="btn btn-sm btn-danger button-icon" @onclick="() => RemoveAddedClient(client)">
+                                    <span class="bi bi-minus-square" aria-hidden="true"></span>
+                                </button>
                             </td>
                         </tr>
                     }
