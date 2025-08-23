@@ -1,7 +1,11 @@
 ﻿@page "/"
+@using Microsoft.Extensions.Localization
 @inject NavigationManager NavigationManager
+@inject IStringLocalizer Localizer
 
 <PageTitle>Главная</PageTitle>
+
+<h3>@Localizer["Welcome"]</h3>
 
 <div class="hero-container">
     <div class="hero-content">

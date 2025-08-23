@@ -1,10 +1,13 @@
-﻿using System.Diagnostics;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using SimpleEventAccountingMobile.Database.DbContexts;
 using SimpleEventAccountingMobile.Database.Interfaces;
 using SimpleEventAccountingMobile.Services;
 using SimpleEventAccountingMobile.Services.Interfaces;
+using System.Diagnostics;
+using System.Globalization;
+using System.Reflection;
 
 namespace SimpleEventAccountingMobile
 {
@@ -30,6 +33,23 @@ namespace SimpleEventAccountingMobile
             builder.Services.AddScoped<ITrainingService, TrainingService>();
             builder.Services.AddScoped<IClientService, ClientService>();
             builder.Services.AddScoped<IEventService, EventService>();
+
+            
+            builder.Services.AddLocalization();
+            //builder.Services.AddSingleton<IStringLocalizer>(provider =>
+            //{
+            //    return provider.GetRequiredService<IStringLocalizerFactory>()
+            //        .Create("Strings", Assembly.GetExecutingAssembly().GetName().Name);
+            //});
+
+            builder.Services.AddTransient<IStringLocalizer, CustomStringLocalizer>();
+
+            builder.Services.AddSingleton<ILanguageService, LanguageService>();
+
+            var savedLanguage = Preferences.Get("AppLanguage", CultureInfo.CurrentCulture.Name);
+            var currentCulture = new CultureInfo(savedLanguage);
+            CultureInfo.DefaultThreadCurrentCulture = currentCulture;
+            CultureInfo.DefaultThreadCurrentUICulture = currentCulture;
 
             // Добавьте глобальный обработчик не перехваченных исключений
             AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;

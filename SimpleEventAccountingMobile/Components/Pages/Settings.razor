@@ -1,0 +1,47 @@
+﻿@page "/settings"
+@using System.Globalization
+@using Microsoft.Extensions.Localization
+@using SimpleEventAccountingMobile.Services.Interfaces
+@inject IStringLocalizer Localizer
+@inject ILanguageService LanguageService
+@inject NavigationManager NavigationManager
+@implements IDisposable
+<h3>Settings</h3>
+
+<h3>@Localizer["Welcome"]</h3>
+
+<select @onchange="OnLanguageChanged">
+    @foreach (var lang in LanguageService.SupportedLanguages)
+    {
+            <option value="@lang.Name" selected="@(lang.Name == LanguageService.CurrentCulture.Name)">
+                @lang.DisplayName
+            </option>
+    }
+</select>
+
+@code {
+
+    protected override void OnInitialized()
+    {
+        LanguageService.CultureChanged += OnCultureChanged;
+    }
+
+    private async Task OnLanguageChanged(ChangeEventArgs e)
+    {
+        LanguageService.SetLanguage(e.Value.ToString());
+
+        // Перезагрузка страницы для применения изменений
+        NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+    }
+
+    private void OnCultureChanged(object? sender, CultureInfo culture)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        LanguageService.CultureChanged -= OnCultureChanged;
+    }
+
+}
