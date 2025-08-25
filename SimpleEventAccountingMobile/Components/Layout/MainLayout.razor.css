@@ -71,7 +71,19 @@ main {
         }
 
     .top-row, article {
-        padding-left: 2rem !important;
-        padding-right: 1.5rem !important;
+        padding-left: 15px !important;
+        padding-right: 15px !important;
     }
+}
+
+.content-area {
+    padding-bottom: env(safe-area-inset-bottom);
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+/* Отступ снизу для клавиатуры */
+.form-container {
+    padding-bottom: 300px;
+    margin-bottom: env(keyboard-inset-height);
 }

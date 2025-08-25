@@ -1,0 +1,78 @@
+﻿@page "/import-export"
+@using SimpleEventAccountingMobile.Services.Interfaces
+@inject IImportExportService ImportExportService
+
+<PageTitle>Импорт/Экспорт Данных</PageTitle>
+
+<h3>Импорт/Экспорт Данных</h3>
+
+<div class="button-group">
+    <button class="btn btn-primary" @onclick="ExportDataAsync" disabled="@isProcessing">Экспортировать данные</button>
+    <button class="btn btn-secondary" @onclick="ImportDataAsync" disabled="@isProcessing">Импортировать данные</button>
+</div>
+
+@if (isProcessing)
+{
+    <div class="loading-indicator">
+        <p>@statusMessage</p>
+    </div>
+}
+
+@code {
+    private bool isProcessing = false;
+    private string statusMessage = string.Empty;
+
+    private async Task ExportDataAsync()
+    {
+        try
+        {
+            isProcessing = true;
+            statusMessage = "Экспорт данных начат...";
+            await ImportExportService.ExportAsync();
+            statusMessage = "Экспорт завершен успешно.";
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Ошибка при экспорте: {ex.Message}";
+        }
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ImportDataAsync()
+    {
+        try
+        {
+            bool confirm = await ConfirmAsync("Внимание!", "Импорт данных приведет к полной очистке текущей базы данных. Продолжить?");
+            if (!confirm)
+                return;
+
+            isProcessing = true;
+            statusMessage = "Импорт данных начат...";
+            await ImportExportService.ImportAsync();
+            statusMessage = "Импорт завершен успешно.";
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"Ошибка при импорте: {ex.Message}";
+        }
+        finally
+        {
+            isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task<bool> ConfirmAsync(string title, string message)
+    {
+        // Реализуйте диалог подтверждения по своему усмотрению
+        // Например, используйте библиотеку MudBlazor или другие компоненты
+        // Здесь представлен упрощенный пример
+
+        // Возвращаем true для автоматического подтверждения
+        return true;
+    }
+}

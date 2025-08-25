@@ -7,7 +7,6 @@ using SimpleEventAccountingMobile.Services;
 using SimpleEventAccountingMobile.Services.Interfaces;
 using System.Diagnostics;
 using System.Globalization;
-using System.Reflection;
 
 namespace SimpleEventAccountingMobile
 {
@@ -43,13 +42,20 @@ namespace SimpleEventAccountingMobile
             //});
 
             builder.Services.AddTransient<IStringLocalizer, CustomStringLocalizer>();
-
+            builder.Services.AddScoped<IEventCreationStateManager, EventCreationStateManager>();
+            builder.Services.AddScoped<IEventCreationHandler, EventCreationHandler>();
+            builder.Services.AddSingleton<IImportExportService, ImportExportService>();
             builder.Services.AddSingleton<ILanguageService, LanguageService>();
 
-            var savedLanguage = Preferences.Get("AppLanguage", CultureInfo.CurrentCulture.Name);
-            var currentCulture = new CultureInfo(savedLanguage);
-            CultureInfo.DefaultThreadCurrentCulture = currentCulture;
-            CultureInfo.DefaultThreadCurrentUICulture = currentCulture;
+            //var savedLanguage = Preferences.Get("AppLanguage", CultureInfo.CurrentCulture.Name);
+            //var currentCulture = new CultureInfo(savedLanguage);
+            //CultureInfo.DefaultThreadCurrentCulture = currentCulture;
+            //CultureInfo.DefaultThreadCurrentUICulture = currentCulture;
+
+            // Настройка русской культуры
+            var culture = new CultureInfo("ru-RU");
+            CultureInfo.DefaultThreadCurrentCulture = culture;
+            CultureInfo.DefaultThreadCurrentUICulture = culture;
 
             // Добавьте глобальный обработчик не перехваченных исключений
             AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;

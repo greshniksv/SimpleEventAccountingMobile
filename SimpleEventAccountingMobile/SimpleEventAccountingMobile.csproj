@@ -20,6 +20,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <EnableDefaultCssItems>false</EnableDefaultCssItems>
         <Nullable>enable</Nullable>
+		<version>1.0.2</version>
 
         <!-- Display name -->
         <ApplicationTitle>SimpleEventAccountingMobile</ApplicationTitle>
@@ -46,6 +47,11 @@
       <AndroidPackageFormat>aab</AndroidPackageFormat>
       <AndroidUseAapt2>True</AndroidUseAapt2>
       <AndroidCreatePackagePerAbi>False</AndroidCreatePackagePerAbi>
+      <AndroidKeyStore>False</AndroidKeyStore>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android|AnyCPU'">
+      <AndroidKeyStore>False</AndroidKeyStore>
     </PropertyGroup>
 
     <ItemGroup>

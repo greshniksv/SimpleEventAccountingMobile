@@ -5,25 +5,23 @@
 
 <PageTitle>Главная</PageTitle>
 
-<h3>@Localizer["Welcome"]</h3>
-
 <div class="hero-container">
     <div class="hero-content">
         <h1 class="hero-title">Simple Event Accounting</h1>
         <p class="hero-subtitle">
             Ваш надежный помощник для учета событий и клиентов.
         </p>
-        <button class="btn btn-primary btn-lg hero-cta-button mt-2" @onclick="GoToClients">
+        <button class="btn btn-primary btn-lg hero-cta-button mt-2 big-button-icon" @onclick="GoToClients">
             <span class="bi bi-people" aria-hidden="true"></span>
             Клиенты
         </button>
 
-        <button class="btn btn-primary btn-lg hero-cta-button mt-2" @onclick="GoToCreateEvent">
-            <span class="bi bi-universal-access-circle" aria-hidden="true"></span>
+        <button class="btn btn-primary btn-lg hero-cta-button mt-2 big-button-icon" @onclick="GoToCreateEvent">
+            <span class="bi bi-rocket" aria-hidden="true"></span>
             Провести событие
         </button>
 
-        <button class="btn btn-primary btn-lg hero-cta-button mt-2" @onclick="GoToConductTraining">
+        <button class="btn btn-primary btn-lg hero-cta-button mt-2 big-button-icon" @onclick="GoToConductTraining">
             <span class="bi bi-universal-access-circle" aria-hidden="true"></span>
             Провести тренировку
         </button>

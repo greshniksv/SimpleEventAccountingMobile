@@ -5,9 +5,7 @@
 @inject NavigationManager NavigationManager
 
 <PageTitle>Список тренировок</PageTitle>
-
 <h3>Список тренировок</h3>
-
 <hr />
 
 @if (trainings == null)
@@ -22,29 +20,31 @@ else
 {
     <table class="table">
         <thead>
-            <tr>
-                <th>Название</th>
-                <th>Дата</th>
-                <th>Кол-во</th>
-                <th>Детали</th>
-            </tr>
+        <tr>
+            <th>Название</th>
+            <th>Дата</th>
+            <th>Кол-во</th>
+            <th>Детали</th>
+        </tr>
         </thead>
         <tbody>
-            @foreach (var training in trainings)
-            {
-                <tr>
-                    <td>@training.Name</td>
-                    <td>@training.Date.ToString("dd.MM.yyyy HH:mm")</td>
-                    <td>@(training.TrainingWalletHistory?.Count() ?? 0)</td>
-                    <td>
-                        <button class="btn btn-sm btn-primary button-icon" @onclick="() => GoToTraining(training.Id)">
-                            <span class="bi bi-postcard" aria-hidden="true"></span>
-                        </button>
-                    </td>
-                </tr>
-            }
+        @foreach (var training in trainings)
+        {
+            <tr>
+                <td>@training.Name</td>
+                <td>@training.Date.ToString("dd.MM.yyyy HH:mm")</td>
+                <td>@(training.TrainingWalletHistory?.Count() ?? 0)</td>
+                <td>
+                    <button class="btn btn-sm btn-primary button-icon" @onclick="() => GoToTraining(training.Id)">
+                        <span class="bi bi-postcard" aria-hidden="true"></span>
+                    </button>
+                </td>
+            </tr>
+        }
         </tbody>
     </table>
+
+    <button class="btn btn-success" @onclick="CreateNewTraining">Провести тренировку</button>
 }
 
 @code {
@@ -59,4 +59,10 @@ else
     {
         NavigationManager.NavigateTo($"/trainings/{trainingId}");
     }
+
+    private void CreateNewTraining()
+    {
+        NavigationManager.NavigateTo($"/conduct-training");
+    }
+
 }

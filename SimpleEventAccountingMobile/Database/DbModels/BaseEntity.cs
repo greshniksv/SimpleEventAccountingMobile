@@ -2,9 +2,10 @@
 
 namespace SimpleEventAccountingMobile.Database.DbModels
 {
+	
 	public abstract class BaseEntity
 	{
 		[Key]
-		public Guid Id { get; protected set; }
+		public Guid Id { get; set; }
 	}
 }

@@ -1,18 +1,20 @@
 ﻿@page "/create-event"
-@using System.ComponentModel.DataAnnotations
-@using SimpleEventAccountingMobile.Database.DbModels
+@using System.Globalization
 @using SimpleEventAccountingMobile.Services.Interfaces
 @using SimpleEventAccountingMobile.Components.Shared
-@inject IEventService EventService
-@inject IClientService ClientService
-@inject IJSRuntime JSRuntime
+@using SimpleEventAccountingMobile.Database.DbModels
+@using SimpleEventAccountingMobile.Dtos
+@inject IEventCreationStateManager StateManager
+@inject IEventCreationHandler EventHandler
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JS
 
 <PageTitle>Создать событие</PageTitle>
-
 <h3>Создать событие</h3>
 
-<EditForm Model="newEventModel" > @*  OnValidSubmit="HandleValidSubmit"> *@
+<hr />
+
+<EditForm Model="newEventModel">
     <DataAnnotationsValidator />
     <ValidationSummary />
 
@@ -49,7 +51,7 @@
 
     <div class="mb-3">
         <h5>Участники события</h5>
-        @if (selectedClients.Any())
+        @if (StateManager.SelectedClients.Any())
         {
             <table class="table table-bordered">
                 <thead>
@@ -60,7 +62,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var client in selectedClients)
+                    @foreach (var client in StateManager.SelectedClients)
                     {
                         <tr>
                             <td>@client.Name</td>
@@ -80,31 +82,28 @@
             <p>Нет добавленных клиентов.</p>
         }
 
-        <button class="btn btn-secondary" @onclick="ShowAddClientModal">Добавить Клиента</button>
+        <button type="button" class="btn btn-secondary" @onclick="ShowAddClientModal">Добавить Клиента</button>
     </div>
 
     <button type="submit" class="btn btn-primary" @onclick="HandleValidSubmit">Создать событие</button>
 </EditForm>
 
-<AddClientPopup IsVisible="@isAddClientModalVisible"
+<AddClientPopup IsVisible="@StateManager.IsAddClientModalVisible"
                IsVisibleChanged="OnAddClientModalChanged"
-               AvailableClients="availableClientsForAddition"
+               AvailableClients="StateManager.AvailableClientsForAddition"
                OnClientSelected="AddClientToSelectedClients" />
 
 @code {
     private NewEventModel newEventModel = new();
-    private List<Client> allClients = new();
-    private List<Client> selectedClients = new();
-    private List<Client> availableClientsForAddition = new();
-    private bool isAddClientModalVisible = false;
     private string? errorMessage;
     private bool isLoading = true;
+    
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            allClients = await ClientService.GetAllClientsAsync();
+            await StateManager.LoadClientsAsync();
         }
         catch (Exception ex)
         {
@@ -118,84 +117,40 @@
 
     private void ShowAddClientModal()
     {
-        isAddClientModalVisible = true;
-        // Определяем доступных для добавления клиентов (не добавленные)
-        availableClientsForAddition = allClients
-            .Where(c => !selectedClients.Any(sc => sc.Id == c.Id))
-            .ToList();
+        StateManager.ShowAddClientModal();
     }
 
     private void OnAddClientModalChanged(bool visible)
     {
-        isAddClientModalVisible = visible;
+        if (!visible)
+        {
+            StateManager.HideAddClientModal();
+        }
     }
 
     private async Task AddClientToSelectedClients(Client client)
     {
-        if (!selectedClients.Any(c => c.Id == client.Id))
-        {
-            selectedClients.Add(client);
-        }
-
-        // Обновляем доступных клиентов
-        availableClientsForAddition = availableClientsForAddition
-            .Where(c => c.Id != client.Id)
-            .ToList();
-
+        StateManager.AddClient(client);
         await InvokeAsync(StateHasChanged);
     }
 
     private void RemoveClient(Client client)
     {
-        selectedClients.Remove(client);
-        // Возвращаем клиента в список доступных для добавления
-        availableClientsForAddition.Add(client);
+        StateManager.RemoveClient(client);
     }
 
     private async Task HandleValidSubmit()
     {
-        if (selectedClients == null || !selectedClients.Any())
+        var clientIds = StateManager.GetSelectedClientIds();
+        var result = await EventHandler.CreateEventAsync(newEventModel, clientIds);
+
+        if (result.Success)
         {
-            errorMessage = "Необходимо выбрать хотя бы одного клиента для события.";
-            return;
-        }
-
-        try
-        {
-            var clientIds = selectedClients.Select(c => c.Id).ToList();
-            var newEvent = new Event
-            {
-                Name = newEventModel.Name,
-                Description = newEventModel.Description,
-                Date = newEventModel.Date,
-                Price = newEventModel.Price,
-                Deleted = false
-            };
-
-            await EventService.CreateEventAsync(newEvent, clientIds);
-
-            // Переход на страницу событий после успешного создания
             NavigationManager.NavigateTo("/events");
         }
-        catch (Exception ex)
+        else
         {
-            errorMessage = $"Ошибка при создании события: {ex.Message}";
+            errorMessage = result.ErrorMessage;
         }
-    }
-
-    // Модель для формы создания события
-    public class NewEventModel
-    {
-        [Required(ErrorMessage = "Название события обязательно.")]
-        public string? Name { get; set; }
-
-        public string? Description { get; set; }
-
-        [Required(ErrorMessage = "Дата события обязательна.")]
-        public DateTime Date { get; set; } = DateTime.Now;
-
-        [Required(ErrorMessage = "Стоимость события обязательна.")]
-        [Range(0.01, double.MaxValue, ErrorMessage = "Стоимость должна быть положительной.")]
-        public decimal Price { get; set; }
     }
 }

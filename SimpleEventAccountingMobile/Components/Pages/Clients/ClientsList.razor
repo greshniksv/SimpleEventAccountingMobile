@@ -23,7 +23,7 @@
 <hr />
 
 <div class="mb-3">
-    <button class="btn btn-primary" @onclick="AddNewClient">
+    <button class="btn btn-primary big-button-icon" @onclick="AddNewClient">
         <span class="bi bi-person-add" aria-hidden="true"></span> Добавить нового клиента
     </button>
 </div>
@@ -74,10 +74,10 @@ else
                     <td colspan="4">
                         <table class="table-info">
                             <tr>
-                                <td>Трен: @client.TrainingCount!.Value.ToString("0")</td>
-                                <td>Подп: @(client.TrainingIsSubscription == true ? "Да" : "Нет")</td>
-                                <td>Пропуск: @client.TrainingSkip!.Value.ToString("0")</td>
-                                <td>Сумма: @client.CashAmount!.Value.ToString("0")</td>
+                                <td><b>Трен:</b> @client.TrainingCount!.Value.ToString("0")</td>
+                                <td><b>Подп:</b> @(client.TrainingIsSubscription == true ? "Да" : "Нет")</td>
+                                <td><b>Проп:</b> @client.TrainingSkip!.Value.ToString("0")</td>
+                                <td><b>Сумма:</b> @client.CashAmount!.Value.ToString("0")</td>
                             </tr>
                         </table>
                     </td>

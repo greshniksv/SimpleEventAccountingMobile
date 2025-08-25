@@ -6,9 +6,7 @@
 @using SimpleEventAccountingMobile.Components.Shared
 
 <PageTitle>Провести тренировку</PageTitle>
-
 <h3>Провести тренировку</h3>
-
 <hr />
 
 @if (isLoading)
@@ -42,7 +40,7 @@ else
 
         <div class="mb-3">
             <label class="form-label">Дата проведения</label>
-            <InputDate @bind-Value="newTraining.Date" class="form-control" />
+            <InputDate @bind-Value="newTraining.Date" Format="dd.MM.yyyy" class="form-control" />
             <ValidationMessage For="@(() => newTraining.Date)" />
         </div>
 
@@ -92,7 +90,7 @@ else
                     }
                 </tbody>
             </table>
-            <button class="btn btn-secondary" @onclick="ShowAddClientModal">Добавить Клиента</button>
+            <button type="button" class="btn btn-secondary" @onclick="ShowAddClientModal">Добавить Клиента</button>
         </div>
 
         <button type="submit" class="btn btn-primary">Провести тренировку</button>
