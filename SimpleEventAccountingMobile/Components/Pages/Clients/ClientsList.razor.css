@@ -1,0 +1,10 @@
+﻿.table-info td {
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.action-column {
+    min-width: 130px;
+    text-wrap: nowrap;
+    text-align: center;
+}

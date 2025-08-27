@@ -1,78 +1,125 @@
 ﻿@page "/import-export"
 @using SimpleEventAccountingMobile.Services.Interfaces
 @inject IImportExportService ImportExportService
+@inject NavigationManager NavigationManager
 
-<PageTitle>Импорт/Экспорт Данных</PageTitle>
+<PageTitle>Data Management</PageTitle>
 
-<h3>Импорт/Экспорт Данных</h3>
+<h3>Data Export and Import</h3>
 
-<div class="button-group">
-    <button class="btn btn-primary" @onclick="ExportDataAsync" disabled="@isProcessing">Экспортировать данные</button>
-    <button class="btn btn-secondary" @onclick="ImportDataAsync" disabled="@isProcessing">Импортировать данные</button>
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Export Data</h5>
+        <p class="card-text">Export all application data to a backup file.</p>
+        <button @onclick="ExportData" class="btn btn-primary" disabled=@_isExporting>
+            @if (_isExporting)
+            {
+                <span class="spinner-border spinner-border-sm" role="status"></span>
+                <span>Exporting...</span>
+            }
+            else
+            {
+                <span>Export Data</span>
+            }
+        </button>
+    </div>
 </div>
 
-@if (isProcessing)
+<div class="card mt-3">
+    <div class="card-body">
+        <h5 class="card-title">Import Data</h5>
+        <p class="card-text">Import data from a backup file. This will replace all current data.</p>
+        <div class="alert alert-warning">
+            <strong>Warning:</strong> Importing data will completely replace all existing data in the application.
+        </div>
+        <button @onclick="ImportData" class="btn btn-warning" disabled=@_isImporting>
+            @if (_isImporting)
+            {
+                <span class="spinner-border spinner-border-sm" role="status"></span>
+                <span>Importing...</span>
+            }
+            else
+            {
+                <span>Import Data</span>
+            }
+        </button>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(_message))
 {
-    <div class="loading-indicator">
-        <p>@statusMessage</p>
+    <div class="alert @(_isSuccess ? "alert-success" : "alert-danger") mt-3">
+        @_message
     </div>
 }
 
 @code {
-    private bool isProcessing = false;
-    private string statusMessage = string.Empty;
+    private bool _isExporting = false;
+    private bool _isImporting = false;
+    private string _message = string.Empty;
+    private bool _isSuccess = false;
 
-    private async Task ExportDataAsync()
+    private async Task ExportData()
     {
+        _isExporting = true;
+        _message = string.Empty;
+        
         try
         {
-            isProcessing = true;
-            statusMessage = "Экспорт данных начат...";
-            await ImportExportService.ExportDataAsync();
-            statusMessage = "Экспорт завершен успешно.";
+            var result = await ImportExportService.ExportDataAsync();
+            if (result)
+            {
+                _message = "Data exported successfully!";
+                _isSuccess = true;
+            }
+            else
+            {
+                _message = "Export operation was cancelled or failed.";
+                _isSuccess = false;
+            }
         }
         catch (Exception ex)
         {
-            statusMessage = $"Ошибка при экспорте: {ex.Message}";
+            _message = $"Error during export: {ex.Message}";
+            _isSuccess = false;
         }
         finally
         {
-            isProcessing = false;
-            StateHasChanged();
+            _isExporting = false;
         }
     }
 
-    private async Task ImportDataAsync()
+    private async Task ImportData()
     {
+        _isImporting = true;
+        _message = string.Empty;
+        
         try
         {
-            bool confirm = await ConfirmAsync("Внимание!", "Импорт данных приведет к полной очистке текущей базы данных. Продолжить?");
-            if (!confirm)
-                return;
-
-            isProcessing = true;
-            statusMessage = "Импорт данных начат...";
-            //await ImportExportService.ImportAsync();
-            statusMessage = "Импорт завершен успешно.";
+            var result = await ImportExportService.ImportDataAsync();
+            if (result)
+            {
+                _message = "Data imported successfully! The application will restart.";
+                _isSuccess = true;
+                
+                // Wait a bit and restart the app
+                await Task.Delay(2000);
+                NavigationManager.NavigateTo("/", true);
+            }
+            else
+            {
+                _message = "Import operation was cancelled or failed.";
+                _isSuccess = false;
+            }
         }
         catch (Exception ex)
         {
-            statusMessage = $"Ошибка при импорте: {ex.Message}";
+            _message = $"Error during import: {ex.Message}";
+            _isSuccess = false;
         }
         finally
         {
-            isProcessing = false;
-            StateHasChanged();
+            _isImporting = false;
         }
-    }
-
-    private async Task<bool> ConfirmAsync(string title, string message)
-    {
-        // Реализуйте диалог подтверждения по своему усмотрению
-        // Например, используйте библиотеку MudBlazor или другие компоненты
-        // Здесь представлен упрощенный пример
-
-        // Возвращаем true для автоматического подтверждения
-        return true;
     }
 }

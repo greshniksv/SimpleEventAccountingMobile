@@ -2,6 +2,7 @@
 {
     public interface IImportExportService
     {
-        Task<string> ExportDataAsync();
+        Task<bool> ExportDataAsync();
+        Task<bool> ImportDataAsync();
     }
 }
