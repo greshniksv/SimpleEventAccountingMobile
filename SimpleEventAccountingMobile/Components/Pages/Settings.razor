@@ -6,23 +6,54 @@
 @inject ILanguageService LanguageService
 @inject NavigationManager NavigationManager
 @implements IDisposable
-<h3>Settings</h3>
+@inject IAppInfoService AppInfoService
 
-<h3>@Localizer["Welcome"]</h3>
+<PageTitle>Настройки</PageTitle>
+<h3>Настройки</h3>
 
-<select @onchange="OnLanguageChanged">
-    @foreach (var lang in LanguageService.SupportedLanguages)
-    {
-            <option value="@lang.Name" selected="@(lang.Name == LanguageService.CurrentCulture.Name)">
-                @lang.DisplayName
-            </option>
-    }
-</select>
+<form>
+    
+    <div class="mb-3">
+        <label for="name" class="form-label">Название:</label>
+        <InputText id="name" class="form-control" readonly @bind-Value="_appName" />
+    </div>
+    
+    <div class="mb-3">
+        <label for="version" class="form-label">Версия:</label>
+        <InputText id="version" class="form-control" readonly @bind-Value="_appVersion" />
+    </div>
+    
+    <div class="mb-3">
+        <label for="build" class="form-label">Номер сборки:</label>
+        <InputText id="build" class="form-control" readonly @bind-Value="_buildNumber" />
+    </div>
+    
+    <div class="mb-3">
+        <label for="name" class="form-label">Выбор языка:</label>
+        <select class="form-control" @onchange="OnLanguageChanged">
+            @foreach (var lang in LanguageService.SupportedLanguages)
+            {
+                <option value="@lang.Name" selected="@(lang.Name == LanguageService.CurrentCulture.Name)">
+                    @lang.DisplayName
+                </option>
+            }
+        </select>
+    </div>
+
+</form>
 
 @code {
 
+    private string _appName = string.Empty;
+    private string _appVersion = string.Empty;
+    private string _buildNumber = string.Empty;
+
     protected override void OnInitialized()
     {
+        _appName = AppInfoService.GetAppName();
+        _appVersion = AppInfoService.GetAppVersion();
+        _buildNumber = AppInfoService.GetBuildNumber();
+
         LanguageService.CultureChanged += OnCultureChanged;
     }
 

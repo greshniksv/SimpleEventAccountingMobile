@@ -44,8 +44,9 @@ namespace SimpleEventAccountingMobile
             builder.Services.AddTransient<IStringLocalizer, CustomStringLocalizer>();
             builder.Services.AddScoped<IEventCreationStateManager, EventCreationStateManager>();
             builder.Services.AddScoped<IEventCreationHandler, EventCreationHandler>();
-            //builder.Services.AddSingleton<IImportExportService, ImportExportService>();
+            builder.Services.AddSingleton<IImportExportService, ImportExportService>();
             builder.Services.AddSingleton<ILanguageService, LanguageService>();
+            builder.Services.AddSingleton<IAppInfoService, AppInfoService>();
 
             //var savedLanguage = Preferences.Get("AppLanguage", CultureInfo.CurrentCulture.Name);
             //var currentCulture = new CultureInfo(savedLanguage);

@@ -5,66 +5,102 @@
 @inject NavigationManager NavigationManager
 
 <PageTitle>Просмотр события</PageTitle>
-<h3>Просмотр события</h3>
-<hr />
 
-@if (isLoading)
-{
-    <p><em>Загрузка события...</em></p>
-}
-else if (errorMessage != null)
-{
-    <div class="alert alert-danger">
-        @errorMessage
-    </div>
-}
-else if (ev == null)
-{
-    <p>Событие не найдено.</p>
-}
-else
-{
-    <div class="mb-3">
-        <strong>Название:</strong> @ev.Name
-    </div>
-    <div class="mb-3">
-        <strong>Описание:</strong> @ev.Description
-    </div>
-    <div class="mb-3">
-        <strong>Дата:</strong> @ev.Date.ToString("dd.MM.yyyy")
-    </div>
-    <div class="mb-3">
-        <strong>Стоимость:</strong> @ev.Price.ToString("C")
-    </div>
-
-    <h5>Участники события</h5>
-    @if (ev.EventClients != null && ev.EventClients.Any())
+<div class="event-details">
+    @if (isLoading)
     {
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Имя</th>
-                    <th>Дата рождения</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var ec in ev.EventClients)
-                {
-                    <tr>
-                        <td>@ec.Client.Name</td>
-                        <td>@ec.Client.Birthday.ToString("dd.MM.yyyy")</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+        <div class="loading-container">
+            <div class="spinner"></div>
+            <p class="loading-text">Загрузка события...</p>
+        </div>
+    }
+    else if (errorMessage != null)
+    {
+        <div class="error-container">
+            <div class="error-icon">⚠️</div>
+            <h3 class="error-title">Ошибка</h3>
+            <p class="error-message">@errorMessage</p>
+            <button class="btn btn-secondary" @onclick="GoBack">Вернуться назад</button>
+        </div>
+    }
+    else if (ev == null)
+    {
+        <div class="empty-state">
+            <div class="empty-icon">📅</div>
+            <h3 class="empty-title">Событие не найдено</h3>
+            <p class="empty-message">Возможно, событие было удалено или не существует</p>
+            <button class="btn btn-secondary" @onclick="GoBack">Вернуться назад</button>
+        </div>
     }
     else
     {
-        <p>Нет участников события.</p>
-    }
 
-    <button class="btn btn-secondary" @onclick="GoBack">Назад</button>
-}
+        <div class="page-header">
+            <h1 class="page-title">@ev.Name</h1>
+            <div class="event-date">
+                <i class="date-icon">📅</i>
+                @ev.Date.ToString("dd.MM.yyyy")
+            </div>
+        </div>
+
+
+        <div class="info-card">
+            <h2 class="section-title">Информация о событии</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Описание:</span>
+                    <span class="info-value">@(string.IsNullOrEmpty(ev.Description) ? "Описание не указано" : ev.Description)</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Стоимость:</span>
+                    <span class="info-value price">@ev.Price.ToString("C")</span>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="participants-section">
+            <h2 class="section-title">
+                Участники события
+                @if (ev.EventClients?.Any() == true)
+                {
+                    <span class="participants-count">(@ev.EventClients.Count)</span>
+                }
+            </h2>
+
+            @if (ev.EventClients == null || !ev.EventClients.Any())
+            {
+                <div class="empty-state">
+                    <div class="empty-icon">👥</div>
+                    <p>Нет участников события</p>
+                </div>
+            }
+            else
+            {
+                <div class="participants-grid">
+                    @foreach (var ec in ev.EventClients)
+                    {
+                        <div class="participant-card">
+                            <div class="participant-name">@ec.Client.Name</div>
+                            <div class="participant-date">
+                                <i class="birthday-icon">🎂</i>
+                                @ec.Client.Birthday.ToString("dd.MM.yyyy")
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+
+        <div class="navigation">
+            <button class="back-button" @onclick="GoBack">
+                <span class="back-icon">←</span>
+                Назад к списку событий
+            </button>
+        </div>
+    }
+</div>
 
 @code {
     [Parameter]

@@ -2,55 +2,92 @@
 @inject ITrainingService TrainingService
 @using SimpleEventAccountingMobile.Database.DbModels
 @using SimpleEventAccountingMobile.Services.Interfaces
+@inject NavigationManager NavigationManager
 
 <PageTitle>Детали тренировки</PageTitle>
-<h3>Детали тренировки</h3>
-<hr />
 
-@if (training == null)
-{
-    <p><em>Загрузка...</em></p>
-}
-else
-{
-    <div>
-        <h4>@training.Name</h4>
-        <p><strong>Описание:</strong> @training.Description</p>
-        <p><strong>Дата проведения:</strong> @training.Date.ToString("dd.MM.yyyy HH:mm")</p>
-    </div>
-
-    <h4>Участники тренировки</h4>
-    @if (participants == null)
+<div class="training-details">
+    @if (training == null)
     {
-        <p><em>Загрузка участников...</em></p>
-    }
-    else if (!participants.Any())
-    {
-        <p>Нет участников.</p>
+        <div class="loading-container">
+            <div class="spinner"></div>
+            <p class="loading-text">Загрузка...</p>
+        </div>
     }
     else
     {
-        <table class="table">
-            <thead>
-            <tr>
-                <th>Имя клиента</th>
-                <th>Дата участия</th>
-            </tr>
-            </thead>
-            <tbody>
-            @foreach (var participant in participants)
-            {
-                <tr>
-                    <td>@participant.Client.Name</td>
-                    <td>@participant.Date.ToString("dd.MM.yyyy HH:mm")</td>
-                </tr>
-            }
-            </tbody>
-        </table>
-    }
+        <!-- Header -->
+        <div class="page-header">
+            <h1 class="page-title">@training.Name</h1>
+            <div class="training-date">
+                <i class="date-icon">📅</i>
+                @training.Date.ToString("dd.MM.yyyy HH:mm")
+            </div>
+        </div>
 
-    <NavLink href="/trainings">← Назад к списку тренировок</NavLink>
-}
+        <!-- Training Info Card -->
+        <div class="info-card">
+            <h2 class="section-title">Информация о тренировке</h2>
+            <div class="info-item">
+                <span class="info-label">Описание:</span>
+                <span class="info-value">@training.Description</span>
+            </div>
+        </div>
+
+        <!-- Participants Section -->
+        <div class="participants-section">
+            <h2 class="section-title">
+                Участники тренировки
+                @if (participants?.Any() == true)
+                {
+                    <span class="participants-count">(@participants.Count)</span>
+                }
+            </h2>
+            
+            @if (participants == null)
+            {
+                <div class="loading-container small">
+                    <div class="spinner small"></div>
+                    <p class="loading-text">Загрузка участников...</p>
+                </div>
+            }
+            else if (!participants.Any())
+            {
+                <div class="empty-state">
+                    <div class="empty-icon">👥</div>
+                    <p>Пока нет участников</p>
+                </div>
+            }
+            else
+            {
+                <div class="participants-grid">
+                    @foreach (var participant in participants)
+                    {
+                        <div class="participant-card">
+                            <div class="participant-name">@participant.Client.Name</div>
+                            <div class="participant-date">@participant.Date.ToString("dd.MM.yyyy HH:mm")</div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- Navigation -->
+@*         <div class="navigation">
+            <NavLink href="/trainings" class="back-button">
+                <span class="back-icon">←</span>
+                Назад к списку тренировок
+            </NavLink>
+        </div> *@
+
+        <div class="navigation">
+            <button class="back-button" @onclick="GoBack">
+                <span class="back-icon">←</span>
+                Назад к списку тренировок
+            </button>
+        </div>
+    }
+</div>
 
 @code {
     [Parameter]
@@ -70,4 +107,10 @@ else
                 .ToList();
         }
     }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/trainings");
+    }
+
 }

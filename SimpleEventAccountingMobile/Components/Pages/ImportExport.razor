@@ -28,7 +28,7 @@
         {
             isProcessing = true;
             statusMessage = "Экспорт данных начат...";
-            await ImportExportService.ExportAsync();
+            await ImportExportService.ExportDataAsync();
             statusMessage = "Экспорт завершен успешно.";
         }
         catch (Exception ex)
@@ -52,7 +52,7 @@
 
             isProcessing = true;
             statusMessage = "Импорт данных начат...";
-            await ImportExportService.ImportAsync();
+            //await ImportExportService.ImportAsync();
             statusMessage = "Импорт завершен успешно.";
         }
         catch (Exception ex)

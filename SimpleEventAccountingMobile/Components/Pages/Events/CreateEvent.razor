@@ -68,7 +68,7 @@
                             <td>@client.Name</td>
                             <td>@client.Birthday.ToString("dd.MM.yyyy")</td>
                             <td>
-                                <button class="btn btn-danger btn-sm button-icon" @onclick="() => RemoveClient(client)">
+                                <button type="button" class="btn btn-danger btn-sm button-icon" @onclick="() => RemoveClient(client)">
                                     <span class="bi bi-minus-square" aria-hidden="true"></span>
                                 </button>
                             </td>

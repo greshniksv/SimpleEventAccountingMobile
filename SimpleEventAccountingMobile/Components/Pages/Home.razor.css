@@ -35,10 +35,13 @@
 }
 
 .hero-cta-button {
-    padding: 1rem 2.5rem; /* Большая кнопка */
+    min-width: 200px;
+    /*padding: 1rem 2.5rem;*/ /* Большая кнопка */
+    padding-bottom: 15px;
+    padding-top: 15px;
     font-size: 1.1rem;
     font-weight: 600;
-    border-radius: 50px; /* Круглые края */
+    border-radius: 20px; /* Круглые края */
     border: none;
     background-color: #4c51bf;
     box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.1);

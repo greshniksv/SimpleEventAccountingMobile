@@ -9,7 +9,7 @@ using System.Text.Json.Serialization;
 
 namespace SimpleEventAccountingMobile.Services
 {
-    public class ImportExportService
+    public class ImportExportService : IImportExportService
     {
         private readonly IMainContext _context;
         private readonly string _tempFolder;
@@ -126,6 +126,7 @@ namespace SimpleEventAccountingMobile.Services
             {
                 var exportData = await PrepareExportDataAsync();
                 string filePath = await CreateExportFileAsync(exportData);
+                await ShareFile(filePath);
                 return filePath;
             }
             catch (Exception ex)
@@ -227,7 +228,7 @@ namespace SimpleEventAccountingMobile.Services
         private async Task<string> CreateExportFileAsync(ExportData exportData)
         {
             string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-            string fileName = $"backup_{timestamp}.seam";
+            string fileName = $"backup_{timestamp}.pdf";
             string tempJsonFile = Path.Combine(_tempFolder, $"data_{timestamp}.json");
             string finalFilePath = Path.Combine(FileSystem.Current.CacheDirectory, fileName);
 

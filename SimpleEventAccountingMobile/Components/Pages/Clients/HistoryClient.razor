@@ -68,7 +68,17 @@ else
                             <td>@entry.Date.ToString("dd.MM.yyyy HH:mm")</td>
                             <td>@entry.Cash.ToString("C")</td>
                             <td>@entry.Comment</td>
-                            <td>@(entry.Event?.Name ?? "Без события")</td>
+                            <td>
+                                @if (entry.Event == null)
+                                {
+                                     <p>Без события</p>
+                                }
+                                else
+                                {
+                                    <a href="view-event/@(entry.Event?.Id)"> @(entry.Event?.Name) </a>
+                                }
+                               
+                            </td>
                         </tr>
                     }
                 </tbody>
@@ -110,7 +120,16 @@ else
                             <td>@entry.Free.ToString("0")</td>
                             <td>@(entry.Subscription ? "Да" : "Нет")</td>
                             <td>@entry.Comment</td>
-                            <td>@(entry.Training?.Name ?? "Без тренировки")</td>
+                            <td>
+                                @if (entry.Training == null)
+                                {
+                                    <p>Без тренировки</p>
+                                }
+                                else
+                                {
+                                    <a href="trainings/@(entry.Training?.Id)">@(entry.Training?.Name)</a>
+                                }
+                            </td>
                         </tr>
                     }
                 </tbody>
