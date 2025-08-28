@@ -3,72 +3,153 @@
 @using SimpleEventAccountingMobile.Services.Interfaces
 @inject ITrainingService TrainingService
 
-<PageTitle>Страница Должников</PageTitle>
+<PageTitle>Должники - SimpleEvent</PageTitle>
 
-<div class="container pt-3">
-    <h2>Должники по Тренировкам</h2>
+<div class="container-fluid py-1">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center mb-3">
+                <i class="fas fa-users-slash text-primary me-3" style="font-size: 2rem;"></i>
+                <h1 class="h2 mb-0 text-dark">Управление должниками</h1>
+            </div>
+            <p class="text-muted">Обзор задолженностей по тренировкам и наличным расчетам</p>
+        </div>
+    </div>
 
-    @if (trainingDebtors == null)
-    {
-        <p>Загрузка должников по тренировкам...</p>
-    }
-    else if (!trainingDebtors.Any())
-    {
-        <p>Нет должников по тренировкам.</p>
-    }
-    else
-    {
-        <table class="table table-bordered table-striped">
-            <thead>
-                <tr>
-                    <th>Имя Клиента</th>
-                    <th>Долг</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var debtor in trainingDebtors)
-                {
-                    <tr>
-                        <td>@debtor.Client.Name</td>
-                        <td>@debtor.Count</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
+    <!-- Training Debtors Card -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-dumbbell me-2"></i>
+                        <h5 class="card-title mb-0">Должники по тренировкам</h5>
+                    </div>
+                    <span class="badge bg-light text-primary fs-6">
+                        @(trainingDebtors?.Count ?? 0)
+                    </span>
+                </div>
+                <div class="card-body">
+                    @if (trainingDebtors == null)
+                    {
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Загрузка...</span>
+                            </div>
+                            <p class="text-muted mt-2">Загрузка данных о должниках...</p>
+                        </div>
+                    }
+                    else if (!trainingDebtors.Any())
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-check-circle text-success" style="font-size: 3rem;"></i>
+                            <p class="text-muted mt-2">Все клиенты оплатили тренировки!</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-4">Клиент</th>
+                                        <th class="text-end pe-4">Долг</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var debtor in trainingDebtors.OrderByDescending(d => d.Count))
+                                    {
+                                        <tr class="align-middle">
+                                            <td class="ps-1">
+                                                <div class="d-flex align-items-center">
+                                                    <div>
+                                                        <strong>@debtor.Client.Name</strong>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="text-end pe-4">
+                                                <span class="fw-bold text-danger fs-6">
+                                                    @debtor.Count.ToString("#")
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <hr />
-
-    <h2>Должники по Наличке</h2>
-
-    @if (cashDebtors == null)
-    {
-        <p>Загрузка должников по наличке...</p>
-    }
-    else if (!cashDebtors.Any())
-    {
-        <p>Нет должников по наличке.</p>
-    }
-    else
-    {
-        <table class="table table-bordered table-striped">
-            <thead>
-                <tr>
-                    <th>Имя Клиента</th>
-                    <th>Долг</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var debtor in cashDebtors)
-                {
-                    <tr>
-                        <td>@debtor.Client.Name</td>
-                        <td>@debtor.Cash.ToString("C")</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    }
+    <!-- Cash Debtors Card -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-money-bill-wave me-2"></i>
+                        <h5 class="card-title mb-0">Должники по наличным расчетам</h5>
+                    </div>
+                    <span class="badge bg-light text-success fs-6">
+                        @(cashDebtors?.Count ?? 0)
+                    </span>
+                </div>
+                <div class="card-body">
+                    @if (cashDebtors == null)
+                    {
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-success" role="status">
+                                <span class="visually-hidden">Загрузка...</span>
+                            </div>
+                            <p class="text-muted mt-2">Загрузка данных о должниках...</p>
+                        </div>
+                    }
+                    else if (!cashDebtors.Any())
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-check-circle text-success" style="font-size: 3rem;"></i>
+                            <p class="text-muted mt-2">Нет задолженностей по наличным расчетам!</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-4">Клиент</th>
+                                        <th class="text-end pe-4">Долг</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var debtor in cashDebtors.OrderByDescending(d => d.Cash))
+                                    {
+                                        <tr class="align-middle">
+                                            <td class="ps-1">
+                                                <div class="d-flex align-items-center">
+                                                    <div>
+                                                        <strong>@debtor.Client.Name</strong>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="text-end pe-2">
+                                                <span class="fw-bold text-danger fs-3">
+                                                    @debtor.Cash.ToString("#")
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @code {
@@ -77,7 +158,15 @@
 
     protected override async Task OnInitializedAsync()
     {
-        trainingDebtors = await TrainingService.GetTrainingDebtClientsAsync();
-        cashDebtors = await TrainingService.GetCashDebtClientsAsync();
+        try
+        {
+            trainingDebtors = await TrainingService.GetTrainingDebtClientsAsync();
+            cashDebtors = await TrainingService.GetCashDebtClientsAsync();
+        }
+        catch (Exception ex)
+        {
+            // Handle error (you might want to add error state handling)
+            Console.WriteLine($"Error loading debtors: {ex.Message}");
+        }
     }
 }

@@ -6,96 +6,143 @@
 @using SimpleEventAccountingMobile.Components.Shared
 
 <PageTitle>Провести тренировку</PageTitle>
-<h3>Провести тренировку</h3>
-<hr />
 
-@if (isLoading)
-{
-    <p><em>Загрузка клиентов...</em></p>
-}
-else
-{
-    <EditForm Model="newTraining" OnValidSubmit="HandleValidSubmit">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
+<div class="conduct-training-page">
+    @if (isLoading)
+    {
+        <div class="loading-container">
+            <div class="spinner"></div>
+            <p class="loading-text">Загрузка клиентов...</p>
+        </div>
+    }
+    else
+    {
+        <!-- Header -->
+        <div class="page-header">
+            <h1 class="page-title">Провести тренировку</h1>
+        </div>
 
-        @if (!string.IsNullOrEmpty(errorMessage))
-        {
-            <div class="alert alert-danger">
-                @errorMessage
+        <EditForm Model="newTraining" OnValidSubmit="HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger">
+                    @errorMessage
+                </div>
+            }
+
+            <!-- Training Info Card -->
+            <div class="info-card">
+                <h2 class="section-title">Информация о тренировке</h2>
+                
+                <div class="form-group">
+                    <label class="form-label">Название тренировки</label>
+                    <InputText @bind-Value="newTraining.Name" class="form-control" />
+                    <ValidationMessage For="@(() => newTraining.Name)" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Описание тренировки</label>
+                    <InputTextArea @bind-Value="newTraining.Description" class="form-control" />
+                    <ValidationMessage For="@(() => newTraining.Description)" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Дата проведения</label>
+                    <InputDate @bind-Value="newTraining.Date" Format="dd.MM.yyyy" class="form-control" />
+                    <ValidationMessage For="@(() => newTraining.Date)" />
+                </div>
             </div>
-        }
 
-        <div class="mb-3">
-            <label class="form-label">Название тренировки</label>
-            <InputText @bind-Value="newTraining.Name" class="form-control" />
-            <ValidationMessage For="@(() => newTraining.Name)" />
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Описание тренировки</label>
-            <InputTextArea @bind-Value="newTraining.Description" class="form-control" />
-            <ValidationMessage For="@(() => newTraining.Description)" />
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Дата проведения</label>
-            <InputDate @bind-Value="newTraining.Date" Format="dd.MM.yyyy" class="form-control" />
-            <ValidationMessage For="@(() => newTraining.Date)" />
-        </div>
-
-        <div class="mb-3">
-            <h5>Клиенты с подпиской</h5>
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>*</th>
-                        <th>Имя</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var selectableClient in selectableSubscribedClients)
+            <!-- Subscribed Clients Section -->
+            <div class="info-card">
+                <h2 class="section-title">
+                    Клиенты с подпиской
+                    @if (selectableSubscribedClients?.Any() == true)
                     {
-                        <tr>
-                            <td>
-                                <InputCheckbox @bind-Value="selectableClient.IsSelected" />
-                            </td>
-                            <td>@selectableClient.Client.Name</td>
-                        </tr>
+                        <span class="participants-count">(@selectableSubscribedClients.Count)</span>
                     }
-                </tbody>
-            </table>
-        </div>
+                </h2>
+                
+                @if (!selectableSubscribedClients.Any())
+                {
+                    <div class="empty-state">
+                        <div class="empty-icon">👥</div>
+                        <p>Нет клиентов с подпиской</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="clients-grid">
+                        @foreach (var selectableClient in selectableSubscribedClients)
+                        {
+                            <div class="client-card @(selectableClient.IsSelected ? "selected" : "")">
+                                <label class="client-checkbox">
+                                    <InputCheckbox class="chk-box" @bind-Value="selectableClient.IsSelected" />
+                                    @* <span class="checkmark"></span> *@
+                                </label>
+                                <div class="client-name">@selectableClient.Client.Name</div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
 
-        <div class="mb-3">
-            <h5>Дополнительные клиенты</h5>
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>Имя</th>
-                        <th>Действие</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var client in addedClients)
+            <!-- Additional Clients Section -->
+            <div class="info-card">
+                <h2 class="section-title">
+                    Дополнительные клиенты
+                    @if (addedClients?.Any() == true)
                     {
-                        <tr>
-                            <td>@client.Name</td>
-                            <td>
-                                <button type="button" class="btn btn-sm btn-danger button-icon" @onclick="() => RemoveAddedClient(client)">
-                                    <span class="bi bi-minus-square" aria-hidden="true"></span>
+                        <span class="participants-count">(@addedClients.Count)</span>
+                    }
+                </h2>
+                
+                @if (!addedClients.Any())
+                {
+                    <div class="empty-state">
+                        <div class="empty-icon">➕</div>
+                        <p>Добавьте клиентов без подписки</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="clients-grid">
+                        @foreach (var client in addedClients)
+                        {
+                            <div class="client-card">
+                                <div class="client-name">@client.Name</div>
+                                <button type="button" class="remove-button" @onclick="() => RemoveAddedClient(client)">
+                                    <span class="remove-icon">✕</span>
                                 </button>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-            <button type="button" class="btn btn-secondary" @onclick="ShowAddClientModal">Добавить Клиента</button>
-        </div>
+                            </div>
+                        }
+                    </div>
+                }
+                
+                <button type="button" class="add-button" @onclick="ShowAddClientModal">
+                    <span class="add-icon">+</span>
+                    Добавить клиента
+                </button>
+            </div>
 
-        <button type="submit" class="btn btn-primary">Провести тренировку</button>
-    </EditForm>
-}
+            <!-- Submit Button -->
+            <div class="action-buttons">
+                <button type="button" class="back-button" @onclick="GoBack">
+                    <span class="back-icon">←</span>
+                    Назад
+                </button>
+                <button type="submit" class="submit-button">
+                    <span class="submit-icon">✓</span>
+                    Провести тренировку
+                </button>
+            </div>
+
+        </EditForm>
+    }
+</div>
 
 <AddClientPopup IsVisible="@isAddClientModalVisible"
                 IsVisibleChanged="OnAddClientModalChanged"
@@ -124,7 +171,6 @@ else
             clients = await TrainingService.GetClientsAsync();
             subscribedClients = await TrainingService.GetSubscribedClientsAsync();
 
-            // Инициализируем selectableSubscribedClients
             selectableSubscribedClients = subscribedClients.Select(c => new SelectableClient
             {
                 Client = c,
@@ -141,10 +187,14 @@ else
         }
     }
 
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/trainings");
+    }
+
     private void ShowAddClientModal()
     {
         isAddClientModalVisible = true;
-        // Определяем доступных для добавления клиентов (не подписанные и не добавленные)
         availableClientsForAddition = clients
             .Where(c => !subscribedClients.Any(sc => sc.Id == c.Id) && !addedClients.Any(ac => ac.Id == c.Id))
             .ToList();
@@ -162,16 +212,13 @@ else
             addedClients.Add(client);
         }
 
-        // Дополнительно, вы можете обновить список доступных клиентов
         availableClientsForAddition = availableClientsForAddition.Where(c => c.Id != client.Id).ToList();
-
         await InvokeAsync(StateHasChanged);
     }
 
     private void RemoveAddedClient(Client client)
     {
         addedClients.Remove(client);
-        // Возвращаем клиента в список доступных для добавления
         if (!subscribedClients.Any(sc => sc.Id == client.Id))
         {
             availableClientsForAddition.Add(client);
@@ -182,16 +229,12 @@ else
     {
         try
         {
-            // Собираем выбранных подписанных клиентов
             var selectedSubscribedClientIds = selectableSubscribedClients
                 .Where(c => c.IsSelected)
                 .Select(c => c.Client.Id)
                 .ToList();
 
-            // Собираем добавленных клиентов
             var addedClientIds = addedClients.Select(c => c.Id).ToList();
-
-            // Объединяем списки
             var finalClientIds = selectedSubscribedClientIds.Union(addedClientIds).Distinct().ToList();
 
             var training = new Training
@@ -203,18 +246,14 @@ else
             };
 
             await TrainingService.ConductTrainingAsync(training, finalClientIds);
-
-            // Перенаправление
             NavigationManager.NavigateTo("/trainings");
         }
         catch (Exception ex)
         {
-            // Логируем и показываем сообщение об ошибке
             errorMessage = $"Ошибка при проведении тренировки: {ex.Message}";
         }
     }
 
-    // Модель для формы
     public class NewTrainingModel
     {
         [Required(ErrorMessage = "Название тренировки обязательно.")]
@@ -226,7 +265,6 @@ else
         public DateTime Date { get; set; } = DateTime.Now;
     }
 
-    // Вспомогательная модель
     public class SelectableClient
     {
         public Client Client { get; set; }

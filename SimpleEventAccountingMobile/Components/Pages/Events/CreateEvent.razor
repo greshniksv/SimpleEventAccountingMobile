@@ -10,94 +10,126 @@
 @inject IJSRuntime JS
 
 <PageTitle>Создать событие</PageTitle>
-<h3>Создать событие</h3>
 
-<hr />
-
-<EditForm Model="newEventModel">
-    <DataAnnotationsValidator />
-    <ValidationSummary />
-
-    @if (!string.IsNullOrEmpty(errorMessage))
+<div class="create-event-page">
+    @if (isLoading)
     {
-        <div class="alert alert-danger">
-            @errorMessage
+        <div class="loading-container">
+            <div class="spinner"></div>
+            <p class="loading-text">Загрузка данных...</p>
         </div>
     }
+    else
+    {
+        <div class="page-header">
+            <h1 class="page-title">Создать новое событие</h1>
+        </div>
 
-    <div class="mb-3">
-        <label class="form-label">Название события</label>
-        <InputText @bind-Value="newEventModel.Name" class="form-control" />
-        <ValidationMessage For="@(() => newEventModel.Name)" />
-    </div>
+        <EditForm Model="newEventModel">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
 
-    <div class="mb-3">
-        <label class="form-label">Описание события</label>
-        <InputTextArea @bind-Value="newEventModel.Description" class="form-control" />
-        <ValidationMessage For="@(() => newEventModel.Description)" />
-    </div>
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="error-container">
+                    <div class="error-icon">⚠️</div>
+                    <h3 class="error-title">Ошибка</h3>
+                    <p class="error-message">@errorMessage</p>
+                </div>
+            }
 
-    <div class="mb-3">
-        <label class="form-label">Дата события</label>
-        <InputDate @bind-Value="newEventModel.Date" class="form-control" />
-        <ValidationMessage For="@(() => newEventModel.Date)" />
-    </div>
+            <div class="form-card">
+                <h2 class="section-title">Основная информация</h2>
 
-    <div class="mb-3">
-        <label class="form-label">Стоимость события (Price)</label>
-        <InputNumber @bind-Value="newEventModel.Price" class="form-control" />
-        <ValidationMessage For="@(() => newEventModel.Price)" />
-    </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Название события</label>
+                        <InputText @bind-Value="newEventModel.Name" class="form-control" />
+                        <ValidationMessage For="@(() => newEventModel.Name)" />
+                    </div>
 
-    <div class="mb-3">
-        <h5>Участники события</h5>
-        @if (StateManager.SelectedClients.Any())
-        {
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Имя</th>
-                        <th>Дата рождения</th>
-                        <th>Действия</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var client in StateManager.SelectedClients)
+                    <div class="form-group">
+                        <label class="form-label">Описание события</label>
+                        <InputTextArea @bind-Value="newEventModel.Description" class="form-control" />
+                        <ValidationMessage For="@(() => newEventModel.Description)" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Дата события</label>
+                        <InputDate @bind-Value="newEventModel.Date" class="form-control" />
+                        <ValidationMessage For="@(() => newEventModel.Date)" />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Стоимость события</label>
+                        <InputNumber @bind-Value="newEventModel.Price" class="form-control" />
+                        <ValidationMessage For="@(() => newEventModel.Price)" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="participants-card">
+                <h2 class="section-title">
+                    Участники события
+                    @if (StateManager.SelectedClients.Any())
                     {
-                        <tr>
-                            <td>@client.Name</td>
-                            <td>@client.Birthday.ToString("dd.MM.yyyy")</td>
-                            <td>
-                                <button type="button" class="btn btn-danger btn-sm button-icon" @onclick="() => RemoveClient(client)">
-                                    <span class="bi bi-minus-square" aria-hidden="true"></span>
-                                </button>
-                            </td>
-                        </tr>
+                        <span class="participants-count">(@StateManager.SelectedClients.Count)</span>
                     }
-                </tbody>
-            </table>
-        }
-        else
-        {
-            <p>Нет добавленных клиентов.</p>
-        }
+                </h2>
 
-        <button type="button" class="btn btn-secondary" @onclick="ShowAddClientModal">Добавить Клиента</button>
-    </div>
+                @if (StateManager.SelectedClients.Any())
+                {
+                    <div class="participants-grid">
+                        @foreach (var client in StateManager.SelectedClients)
+                        {
+                            <div class="participant-card">
+                                <div class="participant-info">
+                                    <div class="participant-name">@client.Name</div>
+                                </div>
+                                <button type="button" class="remove-button" @onclick="() => RemoveClient(client)">
+                                    <span class="remove-icon">×</span>
+                                </button>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <div class="empty-icon">👥</div>
+                        <p>Нет добавленных клиентов</p>
+                    </div>
+                }
 
-    <button type="submit" class="btn btn-primary" @onclick="HandleValidSubmit">Создать событие</button>
-</EditForm>
+                <button type="button" class="add-client-button" @onclick="ShowAddClientModal">
+                    <span class="add-icon">+</span>
+                    Добавить клиента
+                </button>
+            </div>
 
-<AddClientPopup IsVisible="@StateManager.IsAddClientModalVisible"
-               IsVisibleChanged="OnAddClientModalChanged"
-               AvailableClients="StateManager.AvailableClientsForAddition"
-               OnClientSelected="AddClientToSelectedClients" />
+            <div class="action-buttons">
+                <button type="button" class="back-button" @onclick="GoBack">
+                    <span class="back-icon">←</span>
+                    Назад
+                </button>
+                <button type="submit" class="create-button" @onclick="HandleValidSubmit">
+                    <span class="create-icon">✓</span>
+                    Создать событие
+                </button>
+            </div>
+        </EditForm>
+
+        <AddClientPopup IsVisible="@StateManager.IsAddClientModalVisible"
+                        IsVisibleChanged="OnAddClientModalChanged"
+                        AvailableClients="StateManager.AvailableClientsForAddition"
+                        OnClientSelected="AddClientToSelectedClients" />
+    }
+</div>
 
 @code {
     private NewEventModel newEventModel = new();
     private string? errorMessage;
     private bool isLoading = true;
-    
 
     protected override async Task OnInitializedAsync()
     {
@@ -152,5 +184,10 @@
         {
             errorMessage = result.ErrorMessage;
         }
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/events");
     }
 }
