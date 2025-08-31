@@ -13,7 +13,7 @@ namespace SimpleEventAccountingMobile.Services.Interfaces
 
         Task<List<Client>> GetSubscribedClientsAsync();
 
-        Task ConductTrainingAsync(Training training, List<Guid> clientIds);
+        Task ConductTrainingAsync(Training training, List<Guid> clientIds, List<Guid> clientIdWithSubAbsent);
 
         Task<List<TrainingDebtClient>> GetTrainingDebtClientsAsync();
 

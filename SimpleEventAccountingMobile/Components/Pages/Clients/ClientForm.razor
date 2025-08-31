@@ -65,26 +65,26 @@ else
         
             <div class="mb-3">
                 <label for="sub_count" class="form-label">Доступно кол-во занятий:</label>
-                <InputNumber id="sub_count" class="form-control" @bind-Value="trainingWallet.Count" ValueConverter="converter" />
-                <ValidationMessage For="@(() => trainingWallet.Count)" />
+                <InputNumber id="sub_count" class="form-control" @bind-Value="Count" ValueConverter="converter" />
+                <ValidationMessage For="@(() => Count)" />
             </div>
         
             <div class="mb-3">
                 <label for="sub_skip" class="form-label">Доступно пропусков:</label>
-                <InputNumber id="sub_skip" class="form-control" @bind-Value="trainingWallet.Skip" ValueConverter="converter" />
-                <ValidationMessage For="@(() => trainingWallet.Skip)" />
+                <InputNumber id="sub_skip" class="form-control" @bind-Value="Skip" ValueConverter="converter" />
+                <ValidationMessage For="@(() => Skip)" />
             </div>
         
             <div class="mb-3">
                 <label for="sub_free" class="form-label">Доступно бесплатных:</label>
-                <InputNumber id="sub_free" class="form-control" @bind-Value="trainingWallet.Free" ValueConverter="converter" />
-                <ValidationMessage For="@(() => trainingWallet.Skip)" />
+                <InputNumber id="sub_free" class="form-control" @bind-Value="Free" ValueConverter="converter" />
+                <ValidationMessage For="@(() => Free)" />
             </div>
 
             <div class="mb-3">
                 <label for="cash" class="form-label">Наличка:</label>
-                <InputNumber id="cash" class="form-control" @bind-Value="cashWallet.Cash" ValueConverter="converter" />
-                <ValidationMessage For="@(() => cashWallet.Cash)" />
+                <InputNumber id="cash" class="form-control" @bind-Value="Cash" ValueConverter="converter" />
+                <ValidationMessage For="@(() => Cash)" />
             </div>
 
         </div>
@@ -103,6 +103,30 @@ else
     [Parameter]
     public Guid ClientId { get; set; }
 
+    public int Cash
+    {
+        get { return Convert.ToInt32(cashWallet.Cash); }
+        set { cashWallet.Cash = value; }
+    }
+
+    public int Free
+    {
+        get { return Convert.ToInt32(trainingWallet.Free); }
+        set { trainingWallet.Free = value; }
+    }
+
+    public int Skip
+    {
+        get { return Convert.ToInt32(trainingWallet.Skip); }
+        set { trainingWallet.Skip = value; }
+    }
+
+    public int Count
+    {
+        get { return Convert.ToInt32(trainingWallet.Count); }
+        set { trainingWallet.Count = value; }
+    }
+    
     private Client? clientModel;
     private string Title = string.Empty;
     private bool IsNewClient => ClientId == Guid.Empty;
@@ -138,6 +162,7 @@ else
             Title = "Редактировать клиента";
             // Загружаем существующего клиента из БД
             clientModel = await DbContext.Clients
+                .AsNoTracking()
                 .Include(x => x.TrainingWallets)
                 .Include(x => x.CashWallets)
                 .FirstOrDefaultAsync(x => x.Id == ClientId);

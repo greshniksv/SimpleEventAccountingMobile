@@ -95,11 +95,13 @@ else
     {
         // Загружаем только не удаленных клиентов
         clients = await DbContext.Clients
+            .AsNoTracking()
             .Where(c => !c.Deleted)
             .OrderBy(c => c.Name)
             .ToListAsync();
 
         clientsRel = await DbContext.Clients
+            .AsNoTracking()
             .Where(c => !c.Deleted)
             .Include(x=>x.TrainingWallets)
             .Include(x => x.CashWallets)
@@ -159,6 +161,7 @@ else
 
                 // Обновляем UI, удаляя из локального списка
                 clients?.Remove(clientToDelete);
+                clientsRel.RemoveAll(x => x.Id == clientToDelete.Id);
             }
         }
 

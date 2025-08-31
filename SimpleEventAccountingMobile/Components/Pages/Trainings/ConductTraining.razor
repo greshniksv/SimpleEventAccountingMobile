@@ -84,10 +84,18 @@
                                     @* <span class="checkmark"></span> *@
                                 </label>
                                 <div class="client-name">@selectableClient.Client.Name</div>
+                                <button type="button" class="remove-button" @onclick="() => RemoveAddedSubClient(selectableClient)">
+                                    <span class="remove-icon">✕</span>
+                                </button>
                             </div>
                         }
                     </div>
                 }
+                
+                <button type="button" class="add-button" @onclick="ShowAddClientModalSub">
+                    <span class="add-icon">+</span>
+                    Добавить клиента c подписокй
+                </button>
             </div>
 
             <!-- Additional Clients Section -->
@@ -144,6 +152,11 @@
     }
 </div>
 
+<AddClientPopup IsVisible="@isAddClientModalSubVisible"
+                IsVisibleChanged="OnAddClientModalSubChanged"
+                AvailableClients="availableClientsForAdditionSub"
+                OnClientSelected="AddClientToAddedClientsSub" />
+
 <AddClientPopup IsVisible="@isAddClientModalVisible"
                 IsVisibleChanged="OnAddClientModalChanged"
                 AvailableClients="availableClientsForAddition"
@@ -160,6 +173,9 @@
 
     private bool isAddClientModalVisible = false;
     private List<Client> availableClientsForAddition = new();
+
+    private bool isAddClientModalSubVisible = false;
+    private List<Client> availableClientsForAdditionSub = new();
 
     [Inject]
     public NavigationManager NavigationManager { get; set; } = default!;
@@ -196,13 +212,39 @@
     {
         isAddClientModalVisible = true;
         availableClientsForAddition = clients
-            .Where(c => !subscribedClients.Any(sc => sc.Id == c.Id) && !addedClients.Any(ac => ac.Id == c.Id))
+            .Where(c => 
+                !subscribedClients.Any(sc => sc.Id == c.Id) && 
+                !addedClients.Any(ac => ac.Id == c.Id))
             .ToList();
+    }
+
+    private async Task ShowAddClientModalSub()
+    {
+        isAddClientModalSubVisible = true;
+        availableClientsForAdditionSub = 
+            (await TrainingService.GetSubscribedClientsAsync())
+            .Where(x => !selectableSubscribedClients.Any(c=> c.Client.Id == x.Id)).ToList();
     }
 
     private void OnAddClientModalChanged(bool visible)
     {
         isAddClientModalVisible = visible;
+    }
+
+    private void OnAddClientModalSubChanged(bool visible)
+    {
+        isAddClientModalSubVisible = visible;
+    }
+
+    private async Task AddClientToAddedClientsSub(Client client)
+    {
+        if (!selectableSubscribedClients.Any(x => x.Client.Id == client.Id))
+        {
+            selectableSubscribedClients.Add(new SelectableClient(){ Client = client, IsSelected = false });
+        }
+
+        availableClientsForAdditionSub = availableClientsForAdditionSub.Where(c => c.Id != client.Id).ToList();
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task AddClientToAddedClients(Client client)
@@ -225,6 +267,12 @@
         }
     }
 
+    private void RemoveAddedSubClient(SelectableClient client)
+    {
+        selectableSubscribedClients.Remove(client);
+        availableClientsForAdditionSub.Add(client.Client);
+    }
+
     private async Task HandleValidSubmit()
     {
         try
@@ -236,6 +284,10 @@
 
             var addedClientIds = addedClients.Select(c => c.Id).ToList();
             var finalClientIds = selectedSubscribedClientIds.Union(addedClientIds).Distinct().ToList();
+            var absentClients = selectableSubscribedClients
+                .Where(c => !c.IsSelected)
+                .Select(c => c.Client.Id)
+                .ToList();
 
             var training = new Training
             {
@@ -245,7 +297,7 @@
                 Deleted = false
             };
 
-            await TrainingService.ConductTrainingAsync(training, finalClientIds);
+            await TrainingService.ConductTrainingAsync(training, finalClientIds, absentClients);
             NavigationManager.NavigateTo("/trainings");
         }
         catch (Exception ex)

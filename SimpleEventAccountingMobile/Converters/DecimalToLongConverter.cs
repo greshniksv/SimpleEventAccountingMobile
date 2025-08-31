@@ -7,7 +7,10 @@ namespace SimpleEventAccountingMobile.Converters
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is decimal dec)
-                return dec.ToString("0");
+            {
+                return dec.ToString("#");
+            }
+
             return value;
         }
 

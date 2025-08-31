@@ -69,7 +69,14 @@ namespace SimpleEventAccountingMobile.Services
                 .ToListAsync() ?? new List<Client>();
         }
 
-        public async Task ConductTrainingAsync(Training training, List<Guid> clientIds)
+        /// <summary>
+        /// Провести тренировку
+        /// </summary>
+        /// <param name="training">Тренировка</param>
+        /// <param name="clientIds">Все кто пришел</param>
+        /// <param name="clientIdWithSubAbsent">Клиенты с подпиской которые не пришли</param>
+        /// <returns></returns>
+        public async Task ConductTrainingAsync(Training training, List<Guid> clientIds, List<Guid> clientIdWithSubAbsent)
         {
             await using var transaction = await _dbContext.GetDatabase().BeginTransactionAsync();
 
@@ -80,12 +87,10 @@ namespace SimpleEventAccountingMobile.Services
                 _dbContext.Trainings.Add(training);
 
                 var clientWithSubscription = await _dbContext.TrainingWallets
-                    .Where(x => x.Subscription).Select(x=>x.ClientId).ToListAsync();
+                    .Where(x => x.Subscription).Select(x => x.ClientId).ToListAsync();
 
                 var wallets = await _dbContext.TrainingWallets
                     .Where(x => clientIds.Contains(x.ClientId) || clientWithSubscription.Contains(x.ClientId)).ToListAsync();
-
-                var notIn = clientWithSubscription.Where(x => !clientIds.Contains(x));
 
                 /*
                  * Если есть подписка
@@ -98,7 +103,7 @@ namespace SimpleEventAccountingMobile.Services
                  */
 
                 // Списываем из кошелька и добавляем записи в TrainingWalletHistory
-                foreach (var clientId in notIn)
+                foreach (var clientId in clientIdWithSubAbsent)
                 {
                     var wallet = wallets.First(x => x.ClientId == clientId);
 
@@ -110,6 +115,22 @@ namespace SimpleEventAccountingMobile.Services
                     {
                         wallet.Count--;
                     }
+
+                    _dbContext.TrainingWallets.Update(wallet);
+
+                    var history = new TrainingWalletHistory
+                    {
+                        ClientId = clientId,
+                        TrainingId = training.Id,
+                        Date = training.Date,
+                        Count = wallet.Count,
+                        Skip = wallet.Skip,
+                        Free = wallet.Free,
+                        Subscription = wallet.Subscription,
+                        Comment = $"Пропуск тренировки {training.Name}"
+                    };
+
+                    _dbContext.TrainingWalletHistory.Add(history);
                 }
                 
                 foreach (var clientId in clientIds)
@@ -140,7 +161,7 @@ namespace SimpleEventAccountingMobile.Services
                         }
                     }
 
-                    if (wallet.Count == 0)
+                    if (wallet.Count <= 0)
                     {
                         wallet.Subscription = false;
                     }
