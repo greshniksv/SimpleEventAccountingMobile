@@ -39,6 +39,22 @@
             }
         </select>
     </div>
+    
+    <div class="mb-3">
+        <button type="button" class="submit-button" @onclick="GoDeleted">
+            <span class="submit-icon">+</span>
+            Провести тренировку
+        </button>
+    </div>
+    
+   
+
+    <div class="action-buttons">
+        <button type="button" class="back-button" @onclick="GoHome">
+            <span class="back-icon">←</span>
+            Назад
+        </button>
+    </div>
 
 </form>
 
@@ -75,4 +91,13 @@
         LanguageService.CultureChanged -= OnCultureChanged;
     }
 
+    private void GoHome()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+    private void GoDeleted()
+    {
+        NavigationManager.NavigateTo("/clients/deleted");
+    }
 }

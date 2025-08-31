@@ -4,8 +4,12 @@
 @using SimpleEventAccountingMobile.Services.Interfaces
 @inject NavigationManager NavigationManager
 
-<PageTitle>Список тренировок</PageTitle>
-<h3>Список тренировок</h3>
+<PageTitle>Тренировки</PageTitle>
+
+<div class="page-header">
+    <h1 class="page-title">Тренировки</h1>
+</div>
+
 <hr />
 
 @if (trainings == null)
@@ -44,7 +48,17 @@ else
         </tbody>
     </table>
 
-    <button class="btn btn-success" @onclick="CreateNewTraining">Провести тренировку</button>
+    <!-- Submit Button -->
+    <div class="action-buttons">
+        <button type="button" class="back-button" @onclick="GoHome">
+            <span class="back-icon">←</span>
+            Назад
+        </button>
+        <button type="button" class="submit-button" @onclick="CreateNewTraining">
+            <span class="submit-icon">+</span>
+            Провести тренировку
+        </button>
+    </div>
 }
 
 @code {
@@ -65,4 +79,8 @@ else
         NavigationManager.NavigateTo($"/conduct-training");
     }
 
+    private void GoHome()
+    {
+        NavigationManager.NavigateTo($"/");
+    }
 }

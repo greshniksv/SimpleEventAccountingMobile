@@ -1,1 +1,87 @@
 ﻿
+/* Header */
+.page-header {
+    background: linear-gradient(135deg, #007acc, #0099ff);
+    color: white;
+    padding: 24px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 12px rgba(0, 122, 204, 0.2);
+}
+
+.page-title {
+    font-size: 28px;
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.2;
+}
+
+
+/* Buttons */
+.add-button {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border: none;
+    padding: 12px 15px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+    .add-button:hover {
+        background: linear-gradient(135deg, #218838, #1aa179);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+.submit-button {
+    background: linear-gradient(135deg, #007acc, #0099ff);
+    color: white;
+    border: none;
+    padding: 12px 10px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+    .submit-button:hover {
+        background: linear-gradient(135deg, #0056b3, #007acc);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 122, 204, 0.3);
+    }
+
+.back-button {
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+    color: white;
+    border: none;
+    padding: 12px 10px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+    .back-button:hover {
+        background: linear-gradient(135deg, #5a6268, #495057);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+.action-buttons {
+    text-align: center;
+    margin-top: 32px;
+}

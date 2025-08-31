@@ -5,6 +5,9 @@ namespace SimpleEventAccountingMobile.Services.Interfaces
     public interface IClientService
     {
         Task<List<Client>> GetAllClientsAsync();
-        // Добавьте другие методы по необходимости
+
+        Task<List<Client>> GetDeletedAsync();
+
+        Task RestoreDeletedAsync(Guid clientId);
     }
 }

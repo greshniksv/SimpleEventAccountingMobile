@@ -17,8 +17,31 @@ namespace SimpleEventAccountingMobile.Services
         public async Task<List<Client>> GetAllClientsAsync()
         {
             return await _context.Clients
+                .AsNoTracking()
                 .Where(c => !c.Deleted)
                 .ToListAsync();
+        }
+
+        public async Task<List<Client>> GetDeletedAsync()
+        {
+            return await _context.Clients
+                .AsNoTracking()
+                .Where(c => c.Deleted)
+                .ToListAsync();
+        }
+
+        public async Task RestoreDeletedAsync(Guid clientId)
+        {
+            var client = await _context.Clients.FirstOrDefaultAsync(x => x.Id == clientId);
+            if (client == null)
+            {
+                throw new Exception("Client not found exception");
+            }
+
+            client.Deleted = false;
+
+            _context.Clients.Update(client);
+            await _context.SaveChangesAsync();
         }
     }
 }

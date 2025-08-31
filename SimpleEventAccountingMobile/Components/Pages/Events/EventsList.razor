@@ -5,7 +5,10 @@
 @inject NavigationManager NavigationManager
 
 <PageTitle>События</PageTitle>
-<h3>События</h3>
+
+<div class="page-header">
+    <h1 class="page-title">События</h1>
+</div>
 
 <hr />
 
@@ -25,7 +28,7 @@ else
                 <th>Название</th>
                 <th>Дата</th>
                 <th>Сто</th>
-                <th>Дей</th>
+                <th>*</th>
             </tr>
         </thead>
         <tbody>
@@ -33,8 +36,8 @@ else
             {
                 <tr>
                     <td>@ev.Name</td>
-                    <td>@ev.Date.ToString("dd.MM.yyyy")</td>
-                    <td>@ev.Price.ToString("C")</td>
+                    <td>@ev.Date.ToString("dd.MM")</td>
+                    <td>@ev.Price.ToString("#")₽</td>
                     <td>
                         <button class="btn btn-sm btn-primary button-icon" @onclick="() => ViewEvent(ev.Id)">
                             <span class="bi bi-postcard" aria-hidden="true"></span>
@@ -46,7 +49,16 @@ else
     </table>
 }
 
-<button class="btn btn-success" @onclick="CreateNewEvent">Создать новое событие</button>
+<div class="action-buttons">
+    <button type="button" class="back-button" @onclick="GoHome">
+        <span class="back-icon">←</span>
+        Назад
+    </button>
+    <button type="button" class="create-button" @onclick="CreateNewEvent">
+        <span class="create-icon">+</span>
+        Новое событие
+    </button>
+</div>
 
 @code {
     private List<Event>? events;
@@ -67,6 +79,11 @@ else
         {
             isLoading = false;
         }
+    }
+
+    private void GoHome()
+    {
+        NavigationManager.NavigateTo("/");
     }
 
     private void CreateNewEvent()

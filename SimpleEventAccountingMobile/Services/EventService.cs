@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using SimpleEventAccountingMobile.Database.DbContexts;
 using SimpleEventAccountingMobile.Database.DbModels;
 using SimpleEventAccountingMobile.Services.Interfaces;
@@ -25,6 +20,7 @@ namespace SimpleEventAccountingMobile.Services
                 .Where(e => e.Date < DateTime.Now && !e.Deleted)
                 .Include(e => e.EventClients)
                     .ThenInclude(ec => ec.Client)
+                .OrderByDescending(x=>x.Date)
                 .ToListAsync();
         }
 

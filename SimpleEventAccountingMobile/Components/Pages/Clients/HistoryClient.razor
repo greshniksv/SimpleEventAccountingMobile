@@ -152,7 +152,7 @@ else
     {
         // Загрузка клиента
         client = await DbContext.Clients
-            .FirstOrDefaultAsync(c => c.Id == ClientId && !c.Deleted);
+            .FirstOrDefaultAsync(c => c.Id == ClientId);
 
         if (client == null)
         {

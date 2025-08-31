@@ -20,6 +20,7 @@ namespace SimpleEventAccountingMobile.Services
             return await _dbContext.Trainings
                 .Where(t => !t.Deleted)
                 .Include(t => t.TrainingWalletHistory)
+                .OrderByDescending(x=>x.Date)
                 .ToListAsync();
         }
 
