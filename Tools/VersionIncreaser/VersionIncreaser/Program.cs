@@ -1,10 +1,6 @@
-using System;
-using System.IO;
-using System.Text;
-using System.Text.Json;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace VersionUpdater
 {
@@ -33,8 +29,6 @@ namespace VersionUpdater
                     csprojFilePath = Path.GetFullPath(csprojFilePath);
                 }
 
-                PrintInfo($"Target .csproj file: {csprojFilePath}");
-
                 // Check if file exists
                 if (!File.Exists(csprojFilePath))
                 {
@@ -43,11 +37,9 @@ namespace VersionUpdater
                 }
 
                 // Read .csproj file content
-                PrintStep("Reading .csproj file...");
                 string csprojContent = await File.ReadAllTextAsync(csprojFilePath);
 
                 // Find version tag
-                PrintStep("Searching for version tag...");
                 var versionMatch = Regex.Match(csprojContent,
                     @"<Version>(\d+)\.(\d+)\.(\d+)(?:\.(\d+))?</Version>");
 
@@ -73,16 +65,12 @@ namespace VersionUpdater
                 }
 
                 // Parse current version
-                PrintStep("Parsing current version...");
                 int major = int.Parse(versionMatch.Groups[1].Value);
                 int minor = int.Parse(versionMatch.Groups[2].Value);
                 int patch = int.Parse(versionMatch.Groups[3].Value);
                 int build = versionMatch.Groups[4].Success ? int.Parse(versionMatch.Groups[4].Value) : 0;
 
-                PrintInfo($"Current version: {major}.{minor}.{patch}" + (build > 0 ? $".{build}" : ""));
-
                 // Increment minor version
-                PrintStep("Incrementing minor version...");
                 patch++;
                 build = 0; // Reset build version
 
@@ -93,18 +81,13 @@ namespace VersionUpdater
                 );
 
                 // Replace version in content
-                PrintStep("Updating version in file...");
                 string updatedContent = csprojContent.Replace(versionMatch.Value, newVersionTag);
 
                 // Write updated content
                 await File.WriteAllTextAsync(csprojFilePath, updatedContent, Encoding.UTF8);
 
                 // Print success message
-                PrintSuccess("Version updated successfully!");
-                PrintInfo($"Old version: {major}.{minor}.{patch - 1}" + (build > 0 ? $".{build}" : ""));
-                PrintInfo($"New version: {newVersion}");
-                PrintInfo($"File updated: {Path.GetFileName(csprojFilePath)}");
-
+                PrintSuccess($"Success update version '{newVersion}' for '{Path.GetFileName(csprojFilePath)}'");
             }
             catch (Exception ex)
             {
@@ -114,40 +97,34 @@ namespace VersionUpdater
         }
 
         // Ubuntu-style console output methods
-        static void PrintInfo(string message)
-        {
-            Console.ForegroundColor = ConsoleColor.Blue;
-            Console.WriteLine($"{message}");
-            Console.ResetColor();
-        }
-
         static void PrintSuccess(string message)
         {
+            Console.Write(" [ ");
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"{message}");
+            Console.Write("OK");
             Console.ResetColor();
+            Console.Write(" ] ");
+            Console.WriteLine($"{message}");
         }
 
         static void PrintWarning(string message)
         {
+            Console.Write(" [ ");
             Console.ForegroundColor = ConsoleColor.Yellow;
-            Console.WriteLine($"{message}");
+            Console.Write("WARN");
             Console.ResetColor();
+            Console.Write(" ] ");
+            Console.WriteLine($"{message}");
         }
 
         static void PrintError(string message)
         {
+            Console.Write(" [ ");
             Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine($"{message}");
+            Console.Write("ERR");
             Console.ResetColor();
-        }
-
-        static void PrintStep(string message)
-        {
-            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.Write(" ] ");
             Console.WriteLine($"{message}");
-            Console.ResetColor();
-            Task.Delay(200).Wait(); // Small delay for visual effect
         }
     }
 
