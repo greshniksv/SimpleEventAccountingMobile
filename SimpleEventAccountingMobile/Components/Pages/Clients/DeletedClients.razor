@@ -1,0 +1,150 @@
+﻿@page "/clients/deleted"
+@using SimpleEventAccountingMobile.Database.DbModels
+@using SimpleEventAccountingMobile.Services.Interfaces
+@inject IClientService ClientService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Удаленные клиенты</PageTitle>
+
+<!-- Header -->
+<div class="page-header">
+    <h3 class="page-title">Список удаленных клинтов</h3>
+</div>
+
+<div class="container-fluid py-2">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="card-title mb-0">
+                            <i class="fas fa-trash me-2"></i>Клиенты
+                        </h3>
+                        <span class="badge bg-light text-dark fs-6">@_deletedClients?.Count</span>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    @if (_isLoading)
+                    {
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-danger" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="text-muted mt-3">Загрузка удаленных клиентов...</p>
+                        </div>
+                    }
+                    else if (_deletedClients == null || !_deletedClients.Any())
+                    {
+                        <div class="text-center py-5">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">No deleted clients found</h4>
+                            <p class="text-muted">В корзине нет клиентов.</p>
+                        </div>
+                    }
+                    else
+                    {
+
+                        <div class="list-group">
+                            
+                            @foreach (var client in _deletedClients)
+                            {
+
+                                <a href="#" class="list-group-item list-group-item-action" aria-current="true">
+                                    <div class="d-flex w-100 justify-content-between user-block">
+                                        <h5 class="mb-1">@client.Name</h5>
+                                        <small>
+                                            <button class="btn btn-sm btn-secondary button-icon" @onclick="() => HistoryClient(client.Id)">
+                                                <span class="bi bi-clipboard-check" aria-hidden="true"></span>
+                                            </button>
+                                        
+                                            <button class="btn btn-sm btn-secondary button-icon" @onclick="() => EditClient(client.Id)">
+                                                <span class="bi bi-pencil" aria-hidden="true"></span>
+                                            </button>
+
+                                            <button class="btn btn-sm btn-danger button-icon" @onclick="() => RestoreClient(client.Id)">
+                                                <span class="bi bi-recycle" aria-hidden="true"></span>
+                                            </button>
+                                        </small>
+                                    </div>
+                                    <small> Дата удаления: @client.DeletedAt!.Value.ToString("dd.MM.yyyy") </small>
+                                </a>
+                            }
+       
+                        </div>
+
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Client>? _deletedClients;
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDeletedClients();
+    }
+
+    private async Task LoadDeletedClients()
+    {
+        _isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            _deletedClients = await ClientService.GetDeletedAsync();
+        }
+        catch (Exception ex)
+        {
+            // Handle error (you might want to add error handling UI)
+            Console.WriteLine($"Error loading deleted clients: {ex.Message}");
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RestoreClient(Guid clientId)
+    {
+        try
+        {
+            await ClientService.RestoreDeletedAsync(clientId);
+
+            // Remove the restored client from the list
+            _deletedClients?.RemoveAll(c => c.Id == clientId);
+            NavigationManager.NavigateTo("/clients");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error restoring client: {ex.Message}");
+        }
+    }
+
+    private void HistoryClient(Guid clientId)
+    {
+        NavigationManager.NavigateTo($"/clients/history/{clientId}/deleted");
+    }
+
+    private void EditClient(Guid clientId)
+    {
+        NavigationManager.NavigateTo($"/clients/edit/{clientId}/deleted");
+    }
+
+    private string GetInitials(string? name)
+    {
+        if (string.IsNullOrEmpty(name))
+            return "??";
+
+        var names = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (names.Length >= 2)
+            return $"{names[0][0]}{names[1][0]}".ToUpper();
+
+        return name.Length >= 2 ? name[..2].ToUpper() : name.ToUpper();
+    }
+}

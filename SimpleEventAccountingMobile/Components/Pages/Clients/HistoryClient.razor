@@ -1,4 +1,5 @@
 ﻿@page "/clients/history/{ClientId:guid}"
+@page "/clients/history/{ClientId:guid}/{CameFrom}"
 @using SimpleEventAccountingMobile.Database.DbModels
 @using SimpleEventAccountingMobile.Database.Interfaces
 @using Microsoft.EntityFrameworkCore
@@ -144,6 +145,9 @@ else
     [Parameter]
     public Guid ClientId { get; set; }
 
+    [Parameter]
+    public string? CameFrom { get; set; }
+
     private Client? client;
     private List<CashWalletHistory>? cashHistory;
     private List<TrainingWalletHistory>? trainingHistory;
@@ -177,6 +181,13 @@ else
 
     private void GoBack()
     {
-        NavigationManager.NavigateTo("/clients");
+        if (CameFrom == "deleted")
+        {
+            NavigationManager.NavigateTo($"/clients/deleted");
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/clients");
+        }
     }
 }

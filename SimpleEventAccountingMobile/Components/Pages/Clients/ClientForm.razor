@@ -1,7 +1,7 @@
 ﻿@page "/clients/add"
 @page "/clients/edit/{ClientId:guid}"
+@page "/clients/edit/{ClientId:guid}/{CameFrom}"
 @using Microsoft.EntityFrameworkCore
-@using SimpleEventAccountingMobile.Converters
 @using SimpleEventAccountingMobile.Database.DbModels
 @using SimpleEventAccountingMobile.Database.Interfaces
 
@@ -115,6 +115,9 @@
     [Parameter]
     public Guid ClientId { get; set; }
 
+    [Parameter]
+    public string? CameFrom { get; set; }
+
     public int Cash
     {
         get { return Convert.ToInt32(cashWallet.Cash); }
@@ -138,7 +141,7 @@
         get { return Convert.ToInt32(trainingWallet.Count); }
         set { trainingWallet.Count = value; }
     }
-    
+
     private Client? clientModel;
     private string Title = string.Empty;
     private bool IsNewClient => ClientId == Guid.Empty;
@@ -284,6 +287,13 @@
 
     private void NavigateToList()
     {
-        NavigationManager.NavigateTo("/clients");
+        if (CameFrom == "deleted")
+        {
+            NavigationManager.NavigateTo("/clients/deleted");
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/clients");
+        }
     }
 }

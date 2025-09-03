@@ -108,7 +108,7 @@ namespace SimpleEventAccountingMobile.Services
                             wallet.Free += -changeSet.Free.Value;
                         }
 
-                        if (changeSet.Subscription is not null)
+                        if (changeSet.Subscription is not null && changeSet.Count > 0)
                         {
                             wallet.Subscription = true;
                         }
@@ -252,7 +252,7 @@ namespace SimpleEventAccountingMobile.Services
                         }
                     }
 
-                    if (wallet.Count <= 0)
+                    if (wallet is { Count: <= 0, Subscription: true })
                     {
                         wallet.Subscription = false;
                         changeSet.Subscription = false;
