@@ -1,5 +1,4 @@
 ﻿@page "/create-event"
-@using System.Globalization
 @using SimpleEventAccountingMobile.Services.Interfaces
 @using SimpleEventAccountingMobile.Components.Shared
 @using SimpleEventAccountingMobile.Database.DbModels
@@ -175,6 +174,7 @@
     {
         var clientIds = StateManager.GetSelectedClientIds();
         var result = await EventHandler.CreateEventAsync(newEventModel, clientIds);
+        StateManager.ClearSelected();
 
         if (result.Success)
         {
@@ -188,6 +188,7 @@
 
     private void GoBack()
     {
+        StateManager.ClearSelected();
         NavigationManager.NavigateTo("/events");
     }
 }

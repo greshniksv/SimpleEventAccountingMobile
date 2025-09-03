@@ -8,6 +8,8 @@ namespace SimpleEventAccountingMobile.Services.Interfaces
 
         Task<Event> GetEventByIdAsync(Guid eventId);
 
+        Task DeleteEventAsync(Guid eventId);
+
         Task CreateEventAsync(Event newEvent, List<Guid> clientIds);
     }
 }

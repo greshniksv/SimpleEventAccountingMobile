@@ -18,7 +18,7 @@ namespace SimpleEventAccountingMobile.Services
         public async Task<List<Training>> GetTrainingsAsync()
         {
             return await _dbContext.Trainings
-                .Where(t => !t.Deleted)
+                .Where(t => t.DeletedAt == null)
                 .Include(t => t.TrainingWalletHistory)
                 .OrderByDescending(x=>x.Date)
                 .ToListAsync();
@@ -29,20 +29,20 @@ namespace SimpleEventAccountingMobile.Services
             return await _dbContext.Trainings
                     .Include(t => t.TrainingWalletHistory)
                     .ThenInclude(th => th.Client)
-                .FirstOrDefaultAsync(t => t.Id == trainingId && !t.Deleted);
+                .FirstOrDefaultAsync(t => t.Id == trainingId && t.DeletedAt == null);
         }
 
         public async Task<List<Client>> GetClientsAsync()
         {
             return await _dbContext.Clients
-                .Where(c => !c.Deleted)
+                .Where(c => c.DeletedAt == null)
                 .ToListAsync();
         }
 
         public async Task<List<TrainingDebtClient>> GetTrainingDebtClientsAsync()
         {
             return await _dbContext.TrainingWallets
-                .Where(tw => tw.Count < 0 && !tw.Deleted && tw.Client != null && !tw.Client.Deleted)
+                .Where(tw => tw.Count < 0 && tw.DeletedAt == null && tw.Client != null && tw.Client.DeletedAt == null)
                 .Include(tw => tw.Client)
                 .Select(tw => new TrainingDebtClient(tw.Client, tw.Count))
                 .Distinct()
@@ -52,7 +52,7 @@ namespace SimpleEventAccountingMobile.Services
         public async Task<List<CashDebtClient>> GetCashDebtClientsAsync()
         {
             return await _dbContext.CashWallets
-                .Where(tw => tw.Cash < 0 && !tw.Deleted && tw.Client != null && !tw.Client.Deleted)
+                .Where(tw => tw.Cash < 0 && tw.DeletedAt == null && tw.Client != null && tw.Client.DeletedAt == null)
                 .Include(tw => tw.Client)
                 .Select(tw => new CashDebtClient(tw.Client, tw.Cash))
                 .Distinct()
@@ -62,12 +62,88 @@ namespace SimpleEventAccountingMobile.Services
         public async Task<List<Client>> GetSubscribedClientsAsync()
         {
             return await _dbContext.TrainingWallets
-                .Where(tw => tw.Subscription && !tw.Deleted)
+                .Where(tw => tw.Subscription && tw.DeletedAt == null)
                 .Include(tw => tw.Client)
                 .Select(tw => tw.Client)
-                .Where(c => c != null && !c.Deleted)
+                .Where(c => c != null && c.DeletedAt == null)
                 .Distinct()
                 .ToListAsync() ?? new List<Client>();
+        }
+
+        public async Task<bool> DeleteTrainingAsync(Guid trainingId)
+        {
+            await using var transaction = await _dbContext.GetDatabase().BeginTransactionAsync();
+
+            try
+            {
+                var training = await _dbContext.Trainings
+                    .FirstOrDefaultAsync(t => t.Id == trainingId && t.DeletedAt == null);
+
+                if (training == null) return false;
+
+                var changeSets = await _dbContext.TrainingChangeSets
+                    .Where(cs => cs.TrainingId == trainingId)
+                    .ToListAsync();
+
+                foreach (var changeSet in changeSets)
+                {
+                    var wallet = await _dbContext.TrainingWallets
+                        .FirstOrDefaultAsync(w => w.ClientId == changeSet.ClientId && w.DeletedAt == null);
+
+                    if (wallet != null)
+                    {
+                        // Apply reversed changes
+                        if (changeSet.Count != null)
+                        {
+                            wallet.Count += -changeSet.Count.Value;
+                        }
+
+                        if (changeSet.Skip != null)
+                        {
+                            wallet.Skip += -changeSet.Skip.Value;
+                        }
+
+                        if (changeSet.Free != null)
+                        {
+                            wallet.Free += -changeSet.Free.Value;
+                        }
+
+                        if (changeSet.Subscription is not null)
+                        {
+                            wallet.Subscription = true;
+                        }
+
+                        _dbContext.TrainingWallets.Update(wallet);
+
+                        var history = new TrainingWalletHistory
+                        {
+                            ClientId = changeSet.ClientId,
+                            TrainingId = training.Id,
+                            Date = DateTime.Now,
+                            Count = wallet.Count,
+                            Skip = wallet.Skip,
+                            Free = wallet.Free,
+                            Subscription = wallet.Subscription,
+                            Comment = "Возврат средств за удаление тренировки"
+                        };
+
+                        await _dbContext.TrainingWalletHistory.AddAsync(history);
+                    }
+                }
+
+                training.DeletedAt = DateTime.UtcNow;
+                _dbContext.Trainings.Update(training);
+
+                await _dbContext.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         /// <summary>
@@ -84,7 +160,7 @@ namespace SimpleEventAccountingMobile.Services
             try
             {
                 // Создаем новую тренировку
-                training.Deleted = false;
+                training.DeletedAt = null;
                 _dbContext.Trainings.Add(training);
 
                 var clientWithSubscription = await _dbContext.TrainingWallets
@@ -104,17 +180,27 @@ namespace SimpleEventAccountingMobile.Services
                  */
 
                 // Списываем из кошелька и добавляем записи в TrainingWalletHistory
+
+                // Клиент с подпиской и НЕ присутствует
                 foreach (var clientId in clientIdWithSubAbsent)
                 {
+                    TrainingChangeSet changeSet = new TrainingChangeSet()
+                    {
+                        ClientId = clientId,
+                        TrainingId = training.Id
+                    };
+
                     var wallet = wallets.First(x => x.ClientId == clientId);
 
                     if (wallet.Skip > 0)
                     {
                         wallet.Skip--;
+                        changeSet.Skip = -1;
                     }
                     else
                     {
                         wallet.Count--;
+                        changeSet.Count = -1;
                     }
 
                     _dbContext.TrainingWallets.Update(wallet);
@@ -131,40 +217,45 @@ namespace SimpleEventAccountingMobile.Services
                         Comment = $"Пропуск тренировки {training.Name}"
                     };
 
-                    _dbContext.TrainingWalletHistory.Add(history);
+                    await _dbContext.TrainingChangeSets.AddAsync(changeSet);
+                    await _dbContext.TrainingWalletHistory.AddAsync(history);
                 }
-                
+
+                // Клиент и присутствует
                 foreach (var clientId in clientIds)
                 {
+                    TrainingChangeSet changeSet = new TrainingChangeSet()
+                    {
+                        ClientId = clientId,
+                        TrainingId = training.Id
+                    };
+
                     var isSubscription = clientWithSubscription.Any(x => x == clientId);
                     var wallet = wallets.First(x => x.ClientId == clientId);
 
                     if (isSubscription)
                     {
-                        if (wallet.Skip > 0)
-                        {
-                            wallet.Skip--;
-                        }
-                        else
-                        {
-                            wallet.Count--;
-                        }
+                        wallet.Count--;
+                        changeSet.Count = -1;
                     }
                     else
                     {
                         if (wallet.Free > 0)
                         {
                             wallet.Free--;
+                            changeSet.Free = -1;
                         }
                         else
                         {
                             wallet.Count--;
+                            changeSet.Count = -1;
                         }
                     }
 
                     if (wallet.Count <= 0)
                     {
                         wallet.Subscription = false;
+                        changeSet.Subscription = false;
                     }
 
                     _dbContext.TrainingWallets.Update(wallet);
@@ -181,7 +272,8 @@ namespace SimpleEventAccountingMobile.Services
                         Comment = $"Участие в тренировке {training.Name}"
                     };
 
-                    _dbContext.TrainingWalletHistory.Add(history);
+                    await _dbContext.TrainingChangeSets.AddAsync(changeSet);
+                    await _dbContext.TrainingWalletHistory.AddAsync(history);
                 }
 
                 await _dbContext.SaveChangesAsync();

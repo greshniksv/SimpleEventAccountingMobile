@@ -16,11 +16,13 @@ namespace SimpleEventAccountingMobile.Database.DbModels
 
 		public decimal Price { get; set; }
 
-		public bool Deleted { get; set; }
+		public DateTime? DeletedAt { get; set; }
 
 		public ICollection<CashWalletHistory>? CashWalletHistory { get; set; }
 
 		public ICollection<EventClient>? EventClients { get; set; }
+
+        public ICollection<EventChangeSet>? EventChangeSets { get; set; }
 
         public static void Configure(ModelBuilder builder)
             => Configure(builder.Entity<Event>());
@@ -42,6 +44,12 @@ namespace SimpleEventAccountingMobile.Database.DbModels
 
             builder
                 .HasMany(e => e.EventClients)
+                .WithOne(e => e.Event)
+                .HasForeignKey(e => e.EventId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder
+                .HasMany(e => e.EventChangeSets)
                 .WithOne(e => e.Event)
                 .HasForeignKey(e => e.EventId)
                 .OnDelete(DeleteBehavior.NoAction);

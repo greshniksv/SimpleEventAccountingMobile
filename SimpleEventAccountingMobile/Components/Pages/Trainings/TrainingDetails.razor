@@ -72,17 +72,35 @@
         </div>
 
         <!-- Navigation -->
-@*         <div class="navigation">
+        @*         <div class="navigation">
             <NavLink href="/trainings" class="back-button">
                 <span class="back-icon">←</span>
                 Назад к списку тренировок
             </NavLink>
         </div> *@
 
+@*         <div class="navigation">
+            <button class="back-button" @onclick="GoDelete">
+                <span class="back-icon">←</span>
+                Удалить тренировку
+            </button>
+        </div>
+
         <div class="navigation">
             <button class="back-button" @onclick="GoBack">
                 <span class="back-icon">←</span>
                 Назад к списку тренировок
+            </button>
+        </div> *@
+
+        <div class="action-buttons">
+            <button type="button" class="back-button" @onclick="GoBack">
+                <span class="back-icon">←</span>
+                Назад
+            </button>
+            <button type="submit" class="delete-button" @onclick="GoDelete">
+                <span class="create-icon">❌</span>
+                Удалить
             </button>
         </div>
     }
@@ -112,4 +130,8 @@
         NavigationManager.NavigateTo("/trainings");
     }
 
+    private void GoDelete()
+    {
+        NavigationManager.NavigateTo($"/delete-training/{TrainingId}");
+    }
 }

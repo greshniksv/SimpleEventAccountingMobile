@@ -294,7 +294,7 @@
                 Name = newTraining.Name,
                 Description = newTraining.Description,
                 Date = newTraining.Date,
-                Deleted = false
+                DeletedAt = null
             };
 
             await TrainingService.ConductTrainingAsync(training, finalClientIds, absentClients);

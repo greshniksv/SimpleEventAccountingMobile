@@ -67,8 +67,8 @@ else
                     @foreach (var entry in cashHistory.OrderByDescending(e => e.Date))
                     {
                         <tr>
-                            <td>@entry.Date.ToString("dd.MM.yyyy HH:mm")</td>
-                            <td>@entry.Cash.ToString("C")</td>
+                            <td>@entry.Date.ToString("dd.MM HH:mm:ss")</td>
+                            <td>@entry.Cash.ToString("#") ₽</td>
                             <td>@entry.Comment</td>
                             <td>
                                 @if (entry.Event == null)
@@ -116,7 +116,7 @@ else
                     @foreach (var entry in trainingHistory.OrderByDescending(e => e.Date))
                     {
                         <tr>
-                            <td>@entry.Date.ToString("dd.MM.yyyy HH:mm")</td>
+                            <td>@entry.Date.ToString("dd.MM HH:mm:ss")</td>
                             <td>@entry.Count.ToString("0")</td>
                             <td>@entry.Skip.ToString("0")</td>
                             <td>@entry.Free.ToString("0")</td>

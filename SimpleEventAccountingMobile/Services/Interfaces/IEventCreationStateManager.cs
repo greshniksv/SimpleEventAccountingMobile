@@ -16,5 +16,6 @@ namespace SimpleEventAccountingMobile.Services.Interfaces
         bool RemoveClient(Client client);
         void UpdateAvailableClients();
         List<Guid> GetSelectedClientIds();
+        void ClearSelected();
     }
 }

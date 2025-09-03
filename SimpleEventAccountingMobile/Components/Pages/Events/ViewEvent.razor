@@ -88,13 +88,30 @@
             }
         </div>
 
+        <div class="action-buttons">
+            <button type="button" class="back-button" @onclick="GoBack">
+                <span class="back-icon">←</span>
+                Назад
+            </button>
+            <button type="submit" class="delete-button" @onclick="GoDelete">
+                <span class="create-icon">❌</span>
+                Удалить
+            </button>
+        </div>
+
+        @* <div class="navigation">
+            <button class="back-button" @onclick="GoDelete">
+                <span class="back-icon">*</span>
+                Удалить
+            </button>
+        </div>
 
         <div class="navigation">
             <button class="back-button" @onclick="GoBack">
                 <span class="back-icon">←</span>
                 Назад к списку событий
             </button>
-        </div>
+        </div> *@
     }
 </div>
 
@@ -125,5 +142,10 @@
     private void GoBack()
     {
         NavigationManager.NavigateTo("/events");
+    }
+
+    private void GoDelete()
+    {
+        NavigationManager.NavigateTo($"/delete-event/{EventId}");
     }
 }

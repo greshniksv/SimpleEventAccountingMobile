@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System.ComponentModel.DataAnnotations;
 
 namespace SimpleEventAccountingMobile.Database.DbModels
 {
@@ -12,7 +11,7 @@ namespace SimpleEventAccountingMobile.Database.DbModels
 
         public decimal Cash { get; set; }
 
-		public bool Deleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
 
         public static void Configure(ModelBuilder builder)
             => Configure(builder.Entity<CashWallet>());
@@ -25,7 +24,7 @@ namespace SimpleEventAccountingMobile.Database.DbModels
                 Id = Id,
                 ClientId = ClientId,
                 Cash = Cash,
-                Deleted = Deleted,
+                DeletedAt = DeletedAt,
                 Client = null
             };
 
@@ -48,7 +47,7 @@ namespace SimpleEventAccountingMobile.Database.DbModels
                 Id == other.Id &&
                 ClientId == other.ClientId &&
                 Cash == other.Cash &&
-                Deleted == other.Deleted;
+                DeletedAt == other.DeletedAt;
         }
 
         // Переопределение Object.Equals
@@ -68,7 +67,7 @@ namespace SimpleEventAccountingMobile.Database.DbModels
                 hash = hash * 23 + Id.GetHashCode();
                 hash = hash * 23 + ClientId.GetHashCode();
                 hash = hash * 23 + Cash.GetHashCode();
-                hash = hash * 23 + Deleted.GetHashCode();
+                hash = hash * 23 + DeletedAt.GetHashCode();
 
                 return hash;
             }

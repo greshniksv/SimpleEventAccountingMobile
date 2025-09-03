@@ -28,8 +28,10 @@ namespace SimpleEventAccountingMobile.Database.DbContexts
 		public DbSet<TrainingClient> TrainingClients { get; set; }
 		public DbSet<TrainingWallet> TrainingWallets { get; set; }
 		public DbSet<TrainingWalletHistory> TrainingWalletHistory { get; set; }
+        public DbSet<TrainingChangeSet> TrainingChangeSets { get; set; }
+        public DbSet<EventChangeSet> EventChangeSets { get; set; }
 
-		public DatabaseFacade GetDatabase()
+        public DatabaseFacade GetDatabase()
 		{
 			return Database;
 		}
@@ -58,6 +60,8 @@ namespace SimpleEventAccountingMobile.Database.DbContexts
             TrainingClient.Configure(modelBuilder);
             TrainingWallet.Configure(modelBuilder);
             DbModels.TrainingWalletHistory.Configure(modelBuilder);
+            TrainingChangeSet.Configure(modelBuilder);
+            EventChangeSet.Configure(modelBuilder);
         }
 	}
 }

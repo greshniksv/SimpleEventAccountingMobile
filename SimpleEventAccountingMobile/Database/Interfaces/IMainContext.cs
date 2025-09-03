@@ -20,8 +20,10 @@ namespace SimpleEventAccountingMobile.Database.Interfaces
 		DbSet<TrainingClient> TrainingClients { get; set; }
 		DbSet<TrainingWallet> TrainingWallets { get; set; }
 		DbSet<TrainingWalletHistory> TrainingWalletHistory { get; set; }
+        DbSet<TrainingChangeSet> TrainingChangeSets { get; set; }
+        DbSet<EventChangeSet> EventChangeSets { get; set; }
 
-		int SaveChanges();
+        int SaveChanges();
 
 		int SaveChanges(bool acceptAllChangesOnSuccess);
 

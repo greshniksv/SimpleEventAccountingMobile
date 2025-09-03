@@ -1,0 +1,169 @@
+﻿@page "/delete-training/{TrainingId:guid}"
+@using Microsoft.EntityFrameworkCore
+@using SimpleEventAccountingMobile.Database.DbModels
+@using SimpleEventAccountingMobile.Database.Interfaces
+@using SimpleEventAccountingMobile.Services.Interfaces
+@inject ITrainingService TrainingService
+@inject IMainContext DbContext
+@inject NavigationManager Navigation
+
+<PageTitle>Удаление тренировки</PageTitle>
+
+@if (training == null)
+{
+    <div class="loading">Загрузка...</div>
+}
+else
+{
+    <div class="delete-training-container">
+        <div class="training-info">
+            <h2>Удаление!</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Название:</label>
+                    <span>@training.Name</span>
+                </div>
+                <div class="info-item">
+                    <label>Дата:</label>
+                    <span>@training.Date.ToString("dd.MM.yyyy HH:mm")</span>
+                </div>
+                <div class="info-item">
+                    <label>Описание:</label>
+                    <span>@training.Description</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="warning-section">
+            <div class="warning">
+                ⚠️ Тренировка будет удалена и занятия вернуться пользователям
+            </div>
+        </div>
+
+        <div class="clients-section">
+            <h3>Участники тренировки</h3>
+            @if (clientsWithChanges.Any())
+            {
+                <div class="clients-list">
+                    @foreach (var client in clientsWithChanges)
+                    {
+                        <div class="client-item">
+                            <div class="client-name">@client.Client?.Name</div>
+                            <div class="client-changes">
+                                @if (client.Changes.Count != null)
+                                {
+                                    <span class="span-info">Трн: +@client.Changes.Count.Value.ToString("#")</span>
+                                }
+                                @if (client.Changes.Skip != null)
+                                {
+                                    <span class="span-info">Прп: +@client.Changes.Skip.Value.ToString("#")</span>
+                                }
+                                @if (client.Changes.Free != null)
+                                {
+                                    <span class="span-info">Бсп: +@client.Changes.Free.Value.ToString("#")</span>
+                                }
+
+                                @if (client.Changes.Subscription is true)
+                                {
+                                    <span class="span-info">Абн: ✓</span>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="no-clients">Нет участников</div>
+            }
+        </div>
+
+        <div class="actions-section">
+            <button class="btn btn-secondary" @onclick="Cancel">
+                <span class="back-icon">←</span>
+                Отмена
+            </button>
+            <button class="btn btn-danger" @onclick="DeleteTrainingAction" disabled="@isDeleting">
+                <span class="create-icon">❌</span>
+                @if (isDeleting)
+                {
+                    <span>Удаление...</span>
+                }
+                else
+                {
+                    <span>Удалить</span>
+                }
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid TrainingId { get; set; }
+
+    private Training? training;
+    private List<ClientWithChanges> clientsWithChanges = new();
+    private bool isDeleting = false;
+
+    public class ClientWithChanges
+    {
+        public Client? Client { get; set; }
+        public TrainingChangeSet Changes { get; set; } = new();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTrainingData();
+    }
+
+    private async Task LoadTrainingData()
+    {
+        training = await TrainingService.GetTrainingByIdAsync(TrainingId);
+
+        if (training != null)
+        {
+            await LoadClientsWithChanges();
+        }
+    }
+
+    private async Task LoadClientsWithChanges()
+    {
+        var changeSets = await DbContext.TrainingChangeSets
+            .Where(cs => cs.TrainingId == TrainingId)
+            .Include(cs => cs.Client)
+            .ToListAsync();
+
+        clientsWithChanges = changeSets.Select(cs => new ClientWithChanges
+        {
+            Client = cs.Client,
+            Changes = new TrainingChangeSet
+            {
+                Count = -cs.Count, // Invert the changes for display
+                Skip = -cs.Skip,
+                Free = -cs.Free,
+                Subscription = cs.Subscription.HasValue ? !cs.Subscription.Value : false
+            }
+        }).ToList();
+    }
+
+    private async Task DeleteTrainingAction()
+    {
+        isDeleting = true;
+
+        try
+        {
+            await TrainingService.DeleteTrainingAsync(TrainingId);
+            Navigation.NavigateTo("/trainings");
+        }
+        catch (Exception e)
+        {
+            isDeleting = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo($"/trainings/{TrainingId}");
+    }
+}

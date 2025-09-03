@@ -18,7 +18,7 @@ namespace SimpleEventAccountingMobile.Services
         {
             return await _context.Clients
                 .AsNoTracking()
-                .Where(c => !c.Deleted)
+                .Where(c => c.DeletedAt == null)
                 .ToListAsync();
         }
 
@@ -26,7 +26,7 @@ namespace SimpleEventAccountingMobile.Services
         {
             return await _context.Clients
                 .AsNoTracking()
-                .Where(c => c.Deleted)
+                .Where(c => c.DeletedAt != null)
                 .ToListAsync();
         }
 
@@ -38,7 +38,7 @@ namespace SimpleEventAccountingMobile.Services
                 throw new Exception("Client not found exception");
             }
 
-            client.Deleted = false;
+            client.DeletedAt = null;
 
             _context.Clients.Update(client);
             await _context.SaveChangesAsync();

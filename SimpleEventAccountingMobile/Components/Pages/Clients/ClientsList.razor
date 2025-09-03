@@ -57,7 +57,7 @@ else
                     <table class="table-info">
                         <tr>
                             <td><b>Трн:</b> @client.TrainingCount!.Value.ToString("0")</td>
-                            <td><b>Пдоп:</b> @(client.TrainingIsSubscription == true ? "Да" : "Нет")</td>
+                            <td><b>Абон:</b> @(client.TrainingIsSubscription == true ? "Да" : "Нет")</td>
                             <td><b>Проп:</b> @client.TrainingSkip!.Value.ToString("0")</td>
                             <td><b>Сум:</b> @client.CashAmount!.Value.ToString("0")</td>
                         </tr>
@@ -100,13 +100,13 @@ else
         // Загружаем только не удаленных клиентов
         clients = await DbContext.Clients
             .AsNoTracking()
-            .Where(c => !c.Deleted)
+            .Where(c => c.DeletedAt == null)
             .OrderBy(c => c.Name)
             .ToListAsync();
 
         clientsRel = await DbContext.Clients
             .AsNoTracking()
-            .Where(c => !c.Deleted)
+            .Where(c => c.DeletedAt == null)
             .Include(x=>x.TrainingWallets)
             .Include(x => x.CashWallets)
             .OrderBy(c => c.Name)
@@ -165,7 +165,7 @@ else
             var clientInDb = await DbContext.Clients.FindAsync(clientToDelete.Id);
             if(clientInDb != null)
             {
-                clientInDb.Deleted = true;
+                clientInDb.DeletedAt = DateTime.Now;
                 await DbContext.SaveChangesAsync();
 
                 // Обновляем UI, удаляя из локального списка

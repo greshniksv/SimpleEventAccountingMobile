@@ -31,10 +31,10 @@ namespace SimpleEventAccountingMobile.Database.DbModels
 		/// </summary>
 		public bool Subscription { get; set; }
 
-		/// <summary>
-		/// Удалено
-		/// </summary>
-		public  bool Deleted {  get; set; }
+        /// <summary>
+        /// Удалено
+        /// </summary>
+        public DateTime? DeletedAt { get; set; }
 
         // Реализация ICloneable
         public object Clone()
@@ -48,7 +48,7 @@ namespace SimpleEventAccountingMobile.Database.DbModels
                 Skip = Skip,
                 Free = Free,
                 Subscription = Subscription,
-                Deleted = Deleted,
+                DeletedAt = DeletedAt,
                 Client = null
             };
 
@@ -71,7 +71,7 @@ namespace SimpleEventAccountingMobile.Database.DbModels
                 Skip == other.Skip &&
                 Free == other.Free &&
                 Subscription == other.Subscription &&
-                Deleted == other.Deleted;
+                DeletedAt == other.DeletedAt;
         }
 
         // Переопределение Object.Equals
@@ -94,7 +94,7 @@ namespace SimpleEventAccountingMobile.Database.DbModels
                 hash = hash * 23 + Skip.GetHashCode();
                 hash = hash * 23 + Free.GetHashCode();
                 hash = hash * 23 + Subscription.GetHashCode();
-                hash = hash * 23 + Deleted.GetHashCode();
+                hash = hash * 23 + DeletedAt.GetHashCode();
 
                 return hash;
             }

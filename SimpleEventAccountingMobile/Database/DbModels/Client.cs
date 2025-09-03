@@ -14,7 +14,7 @@ namespace SimpleEventAccountingMobile.Database.DbModels
 		[MaxLength(500)]
 		public string? Comment { get; set; }
 
-		public bool Deleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
 
         public ICollection<TrainingWallet>? TrainingWallets { get; set; }
 
@@ -27,6 +27,10 @@ namespace SimpleEventAccountingMobile.Database.DbModels
         public ICollection<CashWalletHistory>? CashWalletHistory { get; set; }
 
         public ICollection<EventClient>? EventClients { get; set; }
+
+        public ICollection<EventChangeSet>? EventChangeSets { get; set; }
+
+        public ICollection<TrainingChangeSet>? TrainingChangeSets { get; set; }
 
         public static void Configure(ModelBuilder builder)
             => Configure(builder.Entity<Client>());
@@ -72,6 +76,18 @@ namespace SimpleEventAccountingMobile.Database.DbModels
 
             builder
                 .HasMany(e => e.EventClients)
+                .WithOne(e => e.Client)
+                .HasForeignKey(e => e.ClientId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder
+                .HasMany(e => e.EventChangeSets)
+                .WithOne(e => e.Client)
+                .HasForeignKey(e => e.ClientId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder
+                .HasMany(e => e.TrainingChangeSets)
                 .WithOne(e => e.Client)
                 .HasForeignKey(e => e.ClientId)
                 .OnDelete(DeleteBehavior.NoAction);

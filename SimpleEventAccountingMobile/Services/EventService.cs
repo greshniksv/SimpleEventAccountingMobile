@@ -2,6 +2,7 @@
 using SimpleEventAccountingMobile.Database.DbContexts;
 using SimpleEventAccountingMobile.Database.DbModels;
 using SimpleEventAccountingMobile.Services.Interfaces;
+using System.Diagnostics;
 
 namespace SimpleEventAccountingMobile.Services
 {
@@ -17,8 +18,8 @@ namespace SimpleEventAccountingMobile.Services
         public async Task<List<Event>> GetPastEventsAsync()
         {
             return await _context.ActionEvents
-                .Where(e => e.Date < DateTime.Now && !e.Deleted)
-                .Include(e => e.EventClients)
+                .Where(e => e.Date < DateTime.Now && e.DeletedAt == null)
+                .Include(e => e.EventClients)!
                     .ThenInclude(ec => ec.Client)
                 .OrderByDescending(x=>x.Date)
                 .ToListAsync();
@@ -27,8 +28,8 @@ namespace SimpleEventAccountingMobile.Services
         public async Task<Event> GetEventByIdAsync(Guid eventId)
         {
             var ev = await _context.ActionEvents
-                .Where(e => e.Id == eventId && !e.Deleted)
-                .Include(e => e.EventClients)
+                .Where(e => e.Id == eventId && e.DeletedAt == null)
+                .Include(e => e.EventClients)!
                     .ThenInclude(ec => ec.Client)
                 .FirstOrDefaultAsync();
 
@@ -36,6 +37,60 @@ namespace SimpleEventAccountingMobile.Services
                 throw new Exception("Событие не найдено.");
 
             return ev;
+        }
+
+        public async Task DeleteEventAsync(Guid eventId)
+        {
+            var eventDetails = await GetEventByIdAsync(eventId);
+            var changeSets = await _context.EventChangeSets
+                .Where(ec => ec.EventId == eventId)
+                .Include(ec => ec.Client)
+                .Include(x=>x.Event)
+                .ToListAsync();
+
+            try
+            {
+                using var transaction = await _context.BeginTransactionAsync();
+
+                // Revert changes for each participant
+                foreach (var changeSet in changeSets)
+                {
+                    // Find the cash wallet
+                    var cashWallet = await _context.CashWallets
+                        .FirstOrDefaultAsync(cw => cw.ClientId == changeSet.ClientId && cw.DeletedAt == null);
+
+                    if (cashWallet != null)
+                    {
+                        // Refund the money
+                        cashWallet.Cash += Math.Abs(changeSet.Cash);
+                        _context.CashWallets.Update(cashWallet);
+
+                        // Record the refund transaction
+                        var history = new CashWalletHistory
+                        {
+                            ClientId = changeSet.ClientId,
+                            Date = DateTime.Now,
+                            EventId = eventId,
+                            Cash = Math.Abs(changeSet.Cash),
+                            Comment = $"Возврат средств за удаленное событие"
+                        };
+                        await _context.CashWalletHistory.AddAsync(history);
+                    }
+                }
+
+                // Mark event as deleted (soft delete)
+                eventDetails.DeletedAt = DateTime.Now;
+                _context.ActionEvents.Update(eventDetails);
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+            }
+            catch (Exception ex)
+            {
+                // Handle error
+                Debug.WriteLine($"Error deleting event: {ex.Message}");
+            }
         }
 
         public async Task CreateEventAsync(Event newEvent, List<Guid> clientIds)
@@ -52,17 +107,22 @@ namespace SimpleEventAccountingMobile.Services
                 foreach (var clientId in clientIds)
                 {
                     var cashWallet = await _context.CashWallets
-                        .FirstOrDefaultAsync(cw => cw.ClientId == clientId && !cw.Deleted);
+                        .FirstOrDefaultAsync(cw => cw.ClientId == clientId && cw.DeletedAt == null);
 
                     if (cashWallet == null)
                         throw new Exception($"CashWallet для клиента {clientId} не найден.");
 
-                    //if (cashWallet.Cash < newEvent.Price)
-                    //    throw new Exception($"У клиента {clientId} недостаточно средств.");
-
                     // Вычитаем стоимость события из кошелька клиента
                     cashWallet.Cash -= newEvent.Price;
                     _context.CashWallets.Update(cashWallet);
+
+                    var changeSet = new EventChangeSet()
+                    {
+                        ClientId = clientId,
+                        EventId = newEvent.Id,
+                        Cash = -newEvent.Price
+                    };
+                    await _context.EventChangeSets.AddAsync(changeSet);
 
                     // Записываем историю транзакции
                     var history = new CashWalletHistory
@@ -73,7 +133,7 @@ namespace SimpleEventAccountingMobile.Services
                         Cash = -newEvent.Price,
                         Comment = $"Оплата события: {newEvent.Name}"
                     };
-                    _context.CashWalletHistory.Add(history);
+                    await _context.CashWalletHistory.AddAsync(history);
 
                     // Добавляем связь событие-клиент
                     var eventClient = new EventClient
@@ -81,7 +141,7 @@ namespace SimpleEventAccountingMobile.Services
                         EventId = newEvent.Id,
                         ClientId = clientId
                     };
-                    _context.EventClients.Add(eventClient);
+                    await _context.EventClients.AddAsync(eventClient);
                 }
 
                 await _context.SaveChangesAsync();

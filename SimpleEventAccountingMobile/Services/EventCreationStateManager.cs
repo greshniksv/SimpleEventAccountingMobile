@@ -68,5 +68,10 @@ namespace SimpleEventAccountingMobile.Services
         {
             return _selectedClients.Select(c => c.Id).ToList();
         }
+
+        public void ClearSelected()
+        {
+            _selectedClients.Clear();
+        }
     }
 }

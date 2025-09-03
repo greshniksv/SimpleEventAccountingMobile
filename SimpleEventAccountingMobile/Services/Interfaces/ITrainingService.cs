@@ -15,6 +15,8 @@ namespace SimpleEventAccountingMobile.Services.Interfaces
 
         Task ConductTrainingAsync(Training training, List<Guid> clientIds, List<Guid> clientIdWithSubAbsent);
 
+        Task<bool> DeleteTrainingAsync(Guid trainingId);
+
         Task<List<TrainingDebtClient>> GetTrainingDebtClientsAsync();
 
         Task<List<CashDebtClient>> GetCashDebtClientsAsync();

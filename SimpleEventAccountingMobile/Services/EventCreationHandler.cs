@@ -28,7 +28,7 @@ namespace SimpleEventAccountingMobile.Services
                     Description = model.Description,
                     Date = model.Date,
                     Price = model.Price,
-                    Deleted = false
+                    DeletedAt = null
                 };
 
                 await _eventService.CreateEventAsync(newEvent, clientIds);

@@ -14,11 +14,13 @@ namespace SimpleEventAccountingMobile.Database.DbModels
 
 		public DateTime Date { get; set; }
 
-		public bool Deleted { get; set; }
+        public DateTime? DeletedAt { get; set; }
 
-		public ICollection<TrainingClient>? TrainingClients { get; set; }
+        public ICollection<TrainingClient>? TrainingClients { get; set; }
 
 		public ICollection<TrainingWalletHistory>? TrainingWalletHistory { get; set; }
+
+        public ICollection<TrainingChangeSet>? TrainingChangeSets { get; set; }
 
         public static void Configure(ModelBuilder builder)
             => Configure(builder.Entity<Training>());
@@ -40,6 +42,12 @@ namespace SimpleEventAccountingMobile.Database.DbModels
 
             builder
                 .HasMany(e => e.TrainingWalletHistory)
+                .WithOne(e => e.Training)
+                .HasForeignKey(e => e.TrainingId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder
+                .HasMany(e => e.TrainingChangeSets)
                 .WithOne(e => e.Training)
                 .HasForeignKey(e => e.TrainingId)
                 .OnDelete(DeleteBehavior.NoAction);

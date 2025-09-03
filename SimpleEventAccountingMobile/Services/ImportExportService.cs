@@ -123,15 +123,38 @@ namespace SimpleEventAccountingMobile.Services
         {
             var exportData = new ExportData
             {
+                EventChangeSets = await _context.EventChangeSets
+                    .AsNoTracking()
+                    .Select(x => new EventChangeSetDto
+                    {
+                        Id = x.Id,
+                        ClientId = x.ClientId,
+                        Cash = x.Cash,
+                        EventId = x.EventId
+                    }).ToListAsync(),
+
+                TrainingChangeSets = await _context.TrainingChangeSets
+                    .AsNoTracking()
+                    .Select(x => new TrainingChangeSetDto()
+                    {
+                        Id = x.Id,
+                        ClientId = x.ClientId,
+                        Subscription = x.Subscription,
+                        Count = x.Count,
+                        Skip = x.Skip,
+                        Free = x.Free,
+                        TrainingId = x.TrainingId
+                    }).ToListAsync(),
+
                 CashWallets = await _context.CashWallets
                     .AsNoTracking()
-                    .Where(x => !x.Deleted)
+                    //.Where(x => x.DeletedAt == null)
                     .Select(x => new CashWalletDto
                     {
                         Id = x.Id,
                         ClientId = x.ClientId,
                         Cash = x.Cash,
-                        Deleted = x.Deleted
+                        DeletedAt = x.DeletedAt
                     }).ToListAsync(),
 
                 CashWalletHistory = await _context.CashWalletHistory
@@ -148,19 +171,19 @@ namespace SimpleEventAccountingMobile.Services
 
                 Clients = await _context.Clients
                     .AsNoTracking()
-                    .Where(x => !x.Deleted)
+                    //.Where(x => x.DeletedAt == null)
                     .Select(x => new ClientDto
                     {
                         Id = x.Id,
                         Name = x.Name,
                         Birthday = x.Birthday,
                         Comment = x.Comment,
-                        Deleted = x.Deleted
+                        DeletedAt = x.DeletedAt
                     }).ToListAsync(),
 
                 Events = await _context.ActionEvents
                     .AsNoTracking()
-                    .Where(x => !x.Deleted)
+                    //.Where(x => x.DeletedAt == null)
                     .Select(x => new EventDto
                     {
                         Id = x.Id,
@@ -168,7 +191,7 @@ namespace SimpleEventAccountingMobile.Services
                         Description = x.Description,
                         Date = x.Date,
                         Price = x.Price,
-                        Deleted = x.Deleted
+                        DeletedAt = x.DeletedAt
                     }).ToListAsync(),
 
                 EventClients = await _context.EventClients
@@ -182,14 +205,14 @@ namespace SimpleEventAccountingMobile.Services
 
                 Trainings = await _context.Trainings
                     .AsNoTracking()
-                    .Where(x => !x.Deleted)
+                    //.Where(x => x.DeletedAt == null)
                     .Select(x => new TrainingDto
                     {
                         Id = x.Id,
                         Name = x.Name,
                         Description = x.Description,
                         Date = x.Date,
-                        Deleted = x.Deleted
+                        DeletedAt = x.DeletedAt
                     }).ToListAsync(),
 
                 TrainingClients = await _context.TrainingClients
@@ -203,7 +226,7 @@ namespace SimpleEventAccountingMobile.Services
 
                 TrainingWallets = await _context.TrainingWallets
                     .AsNoTracking()
-                    .Where(x => !x.Deleted)
+                    //.Where(x => x.DeletedAt == null)
                     .Select(x => new TrainingWalletDto
                     {
                         Id = x.Id,
@@ -212,7 +235,7 @@ namespace SimpleEventAccountingMobile.Services
                         Skip = x.Skip,
                         Free = x.Free,
                         Subscription = x.Subscription,
-                        Deleted = x.Deleted
+                        DeletedAt = x.DeletedAt
                     }).ToListAsync(),
 
                 TrainingWalletHistory = await _context.TrainingWalletHistory
@@ -237,6 +260,8 @@ namespace SimpleEventAccountingMobile.Services
         private async Task ClearDatabaseAsync()
         {
             // Clear tables in proper order to respect foreign key constraints
+            await _context.TrainingChangeSets.ExecuteDeleteAsync();
+            await _context.EventChangeSets.ExecuteDeleteAsync();
             await _context.TrainingWalletHistory.ExecuteDeleteAsync();
             await _context.CashWalletHistory.ExecuteDeleteAsync();
             await _context.EventClients.ExecuteDeleteAsync();
@@ -261,7 +286,7 @@ namespace SimpleEventAccountingMobile.Services
                 Name = dto.Name,
                 Birthday = dto.Birthday,
                 Comment = dto.Comment,
-                Deleted = dto.Deleted
+                DeletedAt = dto.DeletedAt
             }));
 
             _context.ActionEvents.AddRange(importData.Events.Select(dto => new Event
@@ -271,7 +296,7 @@ namespace SimpleEventAccountingMobile.Services
                 Description = dto.Description,
                 Date = dto.Date,
                 Price = dto.Price,
-                Deleted = dto.Deleted
+                DeletedAt = dto.DeletedAt
             }));
 
             _context.Trainings.AddRange(importData.Trainings.Select(dto => new Training
@@ -280,7 +305,7 @@ namespace SimpleEventAccountingMobile.Services
                 Name = dto.Name,
                 Description = dto.Description,
                 Date = dto.Date,
-                Deleted = dto.Deleted
+                DeletedAt = dto.DeletedAt
             }));
 
             await _context.SaveChangesAsync();
@@ -291,7 +316,7 @@ namespace SimpleEventAccountingMobile.Services
                 Id = dto.Id,
                 ClientId = dto.ClientId,
                 Cash = dto.Cash,
-                Deleted = dto.Deleted
+                DeletedAt = dto.DeletedAt
             }));
 
             _context.TrainingWallets.AddRange(importData.TrainingWallets.Select(dto => new TrainingWallet
@@ -302,7 +327,7 @@ namespace SimpleEventAccountingMobile.Services
                 Skip = dto.Skip,
                 Free = dto.Free,
                 Subscription = dto.Subscription,
-                Deleted = dto.Deleted
+                DeletedAt = dto.DeletedAt
             }));
 
             _context.EventClients.AddRange(importData.EventClients.Select(dto => new EventClient

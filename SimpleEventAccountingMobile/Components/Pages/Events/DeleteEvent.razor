@@ -1,0 +1,154 @@
+﻿@page "/delete-event/{EventId:guid}"
+@using System.Diagnostics
+@using Microsoft.EntityFrameworkCore
+@using SimpleEventAccountingMobile.Database.DbModels
+@using SimpleEventAccountingMobile.Database.Interfaces
+@using SimpleEventAccountingMobile.Services.Interfaces
+@inject IEventService EventService
+@inject IMainContext Context
+@inject NavigationManager Navigation
+
+<PageTitle>Удаление события</PageTitle>
+
+@if (eventDetails == null)
+{
+    <div class="loading">Загрузка...</div>
+}
+else
+{
+    <div class="delete-event-container">
+        <div class="event-header">
+            <h2>Удаление!</h2>
+
+            <div class="event-name">
+                <div class="info-item">
+                    <label>Название:</label>
+                    <span>@eventDetails.Name</span>
+                </div>
+                
+            </div>
+            <div class="event-date">
+                <div class="info-item">
+                    <label>Дата:</label>
+                    <span>@eventDetails.Date.ToString("dd.MM.yyyy HH:mm")</span>
+                </div>
+                
+            </div>
+
+            <div class="event-price">
+                <div class="info-item">
+                    <label>Цена:</label>
+                    <span>@eventDetails.Price.ToString("#") ₽</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="warning-section">
+            <div class="warning-icon">⚠️</div>
+            <div class="warning-text">
+                <strong>Событие будет удалено и деньги вернутся пользователям</strong>
+            </div>
+        </div>
+
+        <div class="participants-section">
+            <h3>Участники события:</h3>
+            @if (participants.Any())
+            {
+                <div class="participants-list">
+                    @foreach (var participant in participants)
+                    {
+                        <div class="participant-item">
+                            <span class="participant-name">@participant.ClientName</span>
+                            <span class="refund-amount">@participant.RefundAmount.ToString("#") ₽</span>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="no-participants">Нет участников</p>
+            }
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn-cancel" @onclick="NavigateBack">
+                <span class="back-icon">←</span>
+                Отмена
+            </button>
+            <button class="btn-delete" @onclick="DeleteEventAction">
+                <span class="create-icon">❌</span>
+                Удалить
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public Guid EventId { get; set; }
+
+    private Event eventDetails;
+    private List<ParticipantRefundInfo> participants = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEventData();
+    }
+
+    private async Task LoadEventData()
+    {
+        try
+        {
+            eventDetails = await EventService.GetEventByIdAsync(EventId);
+            await LoadParticipantsWithRefunds();
+        }
+        catch (Exception ex)
+        {
+            // Handle error (you might want to add error handling UI)
+            Console.WriteLine($"Error loading event: {ex.Message}");
+        }
+    }
+
+    private async Task LoadParticipantsWithRefunds()
+    {
+        var changeSets = await Context.EventChangeSets
+            .Where(ec => ec.EventId == EventId)
+            .Include(ec => ec.Client)
+            .ToListAsync();
+
+        participants = changeSets.Select(ec => new ParticipantRefundInfo
+        {
+            ClientId = ec.ClientId,
+            ClientName = ec.Client?.Name ?? "Неизвестный клиент",
+            RefundAmount = Math.Abs(ec.Cash) // Cash is negative, so we take absolute value
+        }).ToList();
+    }
+
+    private async Task DeleteEventAction()
+    {
+        try
+        {
+            await EventService.DeleteEventAsync(EventId);
+
+            // Navigate back to events list or show success message
+            Navigation.NavigateTo("/events");
+        }
+        catch (Exception ex)
+        {
+            // Handle error
+            Debug.WriteLine($"Error deleting event: {ex.Message}");
+        }
+    }
+
+    private void NavigateBack()
+    {
+        Navigation.NavigateTo($"/view-event/{EventId}");
+    }
+
+    private class ParticipantRefundInfo
+    {
+        public Guid ClientId { get; set; }
+        public string ClientName { get; set; }
+        public decimal RefundAmount { get; set; }
+    }
+}
