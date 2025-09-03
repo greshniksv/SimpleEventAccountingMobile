@@ -21,7 +21,7 @@ if not exist "%REN_EXE_PATH%" (
     
     :: Build and publish the project
     echo [ OK ] Building and publishing FileRenamer...
-    dotnet publish FileRenamer.sln -c Release -f net8.0 -o "FileRenamer\bin\Release\net8.0\publish\"
+    dotnet publish FileRenamer.sln -c Release -f net8.0
     
     :: Return to the start folder
     cd "%START_DIR%"
@@ -42,7 +42,7 @@ if not exist "%EXE_PATH%" (
     
     :: Build and publish the project
     echo [ OK ] Building and publishing VersionIncreaser...
-    dotnet publish VersionIncreaser.sln -c Release -f net8.0 -o "VersionIncreaser\bin\Release\net8.0\publish\"
+    dotnet publish VersionIncreaser.sln -c Release -f net8.0
     
     :: Return to the start folder
     cd "%START_DIR%"
