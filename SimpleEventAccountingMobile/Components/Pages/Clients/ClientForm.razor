@@ -1,13 +1,11 @@
 ﻿@page "/clients/add"
 @page "/clients/edit/{ClientId:guid}"
 @page "/clients/edit/{ClientId:guid}/{CameFrom}"
-@using Microsoft.EntityFrameworkCore
 @using SimpleEventAccountingMobile.Database.DbModels
-@using SimpleEventAccountingMobile.Database.Interfaces
 @using SimpleEventAccountingMobile.Services.Interfaces
 
 @inject IErrorService ErrorService
-@inject IMainContext DbContext
+@inject IClientService ClientService
 @inject NavigationManager NavigationManager
 
 <PageTitle>@Title</PageTitle>
@@ -178,11 +176,7 @@
             else
             {
                 Title = "Редактировать клиента";
-                clientModel = await DbContext.Clients
-                    .AsNoTracking()
-                    .Include(x => x.TrainingWallets)
-                    .Include(x => x.CashWallets)
-                    .FirstOrDefaultAsync(x => x.Id == ClientId);
+                clientModel = await ClientService.GetClientByIdAsync(ClientId);
 
                 if (clientModel == null)
                 {
@@ -231,57 +225,31 @@
             if (!cashWalletOld.Equals(cashWallet))
             {
                 clientModel.CashWalletHistory ??= new List<CashWalletHistory>();
-                clientModel.CashWalletHistory.Add(GetCashHistory());
+                clientModel.CashWalletHistory.Add(ClientService.CreateCashWalletHistory(cashWallet));
             }
 
             if (!trainingWalletOld.Equals(trainingWallet))
             {
                 clientModel.TrainingWalletHistory ??= new List<TrainingWalletHistory>();
-                clientModel.TrainingWalletHistory.Add(GetTrainingHistory());
+                clientModel.TrainingWalletHistory.Add(ClientService.CreateTrainingWalletHistory(trainingWallet));
             }
 
             if (IsNewClient)
             {
-                await DbContext.Clients.AddAsync(clientModel);
+                await ClientService.CreateClientAsync(clientModel);
             }
             else
             {
-                DbContext.Clients.Update(clientModel);
+                await ClientService.UpdateClientAsync(clientModel);
             }
 
-            await DbContext.SaveChangesAsync();
             NavigateToList();
         }
         catch (Exception ex)
         {
-            ErrorService.ShowError(ex,  $"Ошибка при сохранении: {ex.Message}");
+            ErrorService.ShowError(ex, $"Ошибка при сохранении: {ex.Message}");
             errorMessage = $"Ошибка при сохранении: {ex.Message}";
         }
-    }
-
-    private TrainingWalletHistory GetTrainingHistory()
-    {
-        return new TrainingWalletHistory()
-        {
-            Skip = trainingWallet?.Skip ?? 0,
-            Count = trainingWallet?.Count ?? 0,
-            Subscription = trainingWallet.Subscription,
-            Free = trainingWallet?.Free ?? 0,
-            Comment = "Ручное изменение",
-            Date = DateTime.Now,
-            TrainingId = null
-        };
-    }
-
-    private CashWalletHistory GetCashHistory()
-    {
-        return new CashWalletHistory()
-        {
-            Cash = cashWallet?.Cash ?? 0,
-            Comment = "Ручное изменение",
-            Date = DateTime.Now,
-            EventId = null
-        };
     }
 
     private void Cancel()

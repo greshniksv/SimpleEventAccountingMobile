@@ -70,6 +70,9 @@ namespace SimpleEventAccountingMobile
             builder.Services.AddSingleton<IAppInfoService, AppInfoService>();
             builder.Services.AddSingleton<IErrorService, ErrorService>();
 
+            // Add Serilog logging
+            builder.Logging.AddSerilog(Log.Logger, dispose: true);
+
             //var savedLanguage = Preferences.Get("AppLanguage", CultureInfo.CurrentCulture.Name);
             //var currentCulture = new CultureInfo(savedLanguage);
             //CultureInfo.DefaultThreadCurrentCulture = currentCulture;
@@ -93,7 +96,7 @@ namespace SimpleEventAccountingMobile
 
             // 1. Собираем приложение
             var app = builder.Build();
-
+            
             // 2. Применяем миграции
             ApplyMigrations(app.Services);
 
