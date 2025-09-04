@@ -40,12 +40,12 @@ namespace FileRenamer
                     return 1;
                 }
 
-                Console.WriteLine($"Found version: {version}");
+                //Console.WriteLine($"Found version: {version}");
 
                 // Rename the file
                 string newFilePath = RenameFileWithVersion(filePath, version);
 
-                Console.Write(" [ ");
+                Console.Write("[ ");
                 Console.ForegroundColor = ConsoleColor.Green;
                 Console.Write("OK");
                 Console.ResetColor();

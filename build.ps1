@@ -21,7 +21,7 @@ if (-not (Test-Path $REN_EXE_PATH)) {
     
     # Build and publish the project
     Write-Host "[${ESC}[32m OK ${ESC}[0m] Building and publishing FileRenamer..."
-    dotnet publish FileRenamer.sln -c Release -f net8.0
+    dotnet publish -p:NoWarn="CS8600" FileRenamer.sln -c Release -f net8.0
     
     # Return to the start folder
     Set-Location $START_DIR
@@ -42,7 +42,7 @@ if (-not (Test-Path $EXE_PATH)) {
     
     # Build and publish the project
     Write-Host "[${ESC}[32m OK ${ESC}[0m] Building and publishing VersionIncreaser..."
-    dotnet publish VersionIncreaser.sln -c Release -f net8.0
+    dotnet publish -p:NoWarn="CS8600" VersionIncreaser.sln -c Release -f net8.0
     
     # Return to the start folder
     Set-Location $START_DIR
@@ -51,7 +51,13 @@ if (-not (Test-Path $EXE_PATH)) {
 }
 
 # Execute VersionIncreaser
-& $EXE_PATH
+if (Test-Path $EXE_PATH) {
+    & $EXE_PATH
+} else {
+    Write-Host "[${ESC}[31m ERROR ${ESC}[0m] $EXE_PATH not found!"
+    pause
+    exit 1
+}
 
 # Execute the dotnet publish command
 Write-Host "[${ESC}[32m OK ${ESC}[0m] Publishing Android app..."

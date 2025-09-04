@@ -87,7 +87,7 @@ namespace VersionUpdater
                 await File.WriteAllTextAsync(csprojFilePath, updatedContent, Encoding.UTF8);
 
                 // Print success message
-                PrintSuccess($"Success update version '{newVersion}' for '{Path.GetFileName(csprojFilePath)}'");
+                PrintSuccess($"Updated version '{newVersion}' for '{Path.GetFileName(csprojFilePath)}'");
             }
             catch (Exception ex)
             {
@@ -99,7 +99,7 @@ namespace VersionUpdater
         // Ubuntu-style console output methods
         static void PrintSuccess(string message)
         {
-            Console.Write(" [ ");
+            Console.Write("[ ");
             Console.ForegroundColor = ConsoleColor.Green;
             Console.Write("OK");
             Console.ResetColor();
@@ -109,7 +109,7 @@ namespace VersionUpdater
 
         static void PrintWarning(string message)
         {
-            Console.Write(" [ ");
+            Console.Write("[ ");
             Console.ForegroundColor = ConsoleColor.Yellow;
             Console.Write("WARN");
             Console.ResetColor();
@@ -119,7 +119,7 @@ namespace VersionUpdater
 
         static void PrintError(string message)
         {
-            Console.Write(" [ ");
+            Console.Write("[ ");
             Console.ForegroundColor = ConsoleColor.Red;
             Console.Write("ERR");
             Console.ResetColor();
