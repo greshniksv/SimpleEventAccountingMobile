@@ -6,6 +6,7 @@
 @inject ITrainingService TrainingService
 @inject IMainContext DbContext
 @inject NavigationManager Navigation
+@inject IErrorService ErrorService
 
 <PageTitle>Удаление тренировки</PageTitle>
 
@@ -129,22 +130,29 @@ else
 
     private async Task LoadClientsWithChanges()
     {
-        var changeSets = await DbContext.TrainingChangeSets
-            .Where(cs => cs.TrainingId == TrainingId)
-            .Include(cs => cs.Client)
-            .ToListAsync();
-
-        clientsWithChanges = changeSets.Select(cs => new ClientWithChanges
+        try
         {
-            Client = cs.Client,
-            Changes = new TrainingChangeSet
+            var changeSets = await DbContext.TrainingChangeSets
+                .Where(cs => cs.TrainingId == TrainingId)
+                .Include(cs => cs.Client)
+                .ToListAsync();
+
+            clientsWithChanges = changeSets.Select(cs => new ClientWithChanges
             {
-                Count = -cs.Count, // Invert the changes for display
-                Skip = -cs.Skip,
-                Free = -cs.Free,
-                Subscription = cs.Subscription.HasValue ? !cs.Subscription.Value : false
-            }
-        }).ToList();
+                Client = cs.Client,
+                Changes = new TrainingChangeSet
+                {
+                    Count = -cs.Count, // Invert the changes for display
+                    Skip = -cs.Skip,
+                    Free = -cs.Free,
+                    Subscription = cs.Subscription.HasValue ? !cs.Subscription.Value : false
+                }
+            }).ToList();
+        }
+        catch (Exception ex)
+        {
+            ErrorService.ShowError(ex, "Ошибка загрузки страницы");
+        }
     }
 
     private async Task DeleteTrainingAction()
@@ -156,8 +164,9 @@ else
             await TrainingService.DeleteTrainingAsync(TrainingId);
             Navigation.NavigateTo("/trainings");
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
+            ErrorService.ShowError(ex, "Ошибка удаления тренировки");
             isDeleting = false;
         }
     }

@@ -1,0 +1,25 @@
+﻿.log-line {
+    white-space: pre-wrap;
+    border-bottom: 1px solid #eee;
+    padding: 2px 0;
+}
+
+    .log-line:last-child {
+        border-bottom: none;
+    }
+
+.log-content {
+    line-height: 1.4;
+}
+
+select.form-select {
+    max-width: 100%;
+}
+
+.btn {
+    margin-bottom: 5px;
+}
+
+.badge {
+    font-size: 0.8em;
+}

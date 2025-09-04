@@ -3,7 +3,7 @@
 @using System.ComponentModel.DataAnnotations
 @using SimpleEventAccountingMobile.Database.DbModels
 @using SimpleEventAccountingMobile.Services.Interfaces
-@using SimpleEventAccountingMobile.Components.Shared
+@inject IErrorService ErrorService
 
 <PageTitle>Провести тренировку</PageTitle>
 
@@ -210,20 +210,34 @@
 
     private void ShowAddClientModal()
     {
-        isAddClientModalVisible = true;
-        availableClientsForAddition = clients
-            .Where(c => 
-                !subscribedClients.Any(sc => sc.Id == c.Id) && 
-                !addedClients.Any(ac => ac.Id == c.Id))
-            .ToList();
+        try
+        {
+            isAddClientModalVisible = true;
+            availableClientsForAddition = clients
+                .Where(c => 
+                    !subscribedClients.Any(sc => sc.Id == c.Id) && 
+                    !addedClients.Any(ac => ac.Id == c.Id))
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            ErrorService.ShowError(ex, "Ошибка загрузки клиентов");
+        }
     }
 
     private async Task ShowAddClientModalSub()
     {
-        isAddClientModalSubVisible = true;
-        availableClientsForAdditionSub = 
-            (await TrainingService.GetSubscribedClientsAsync())
-            .Where(x => !selectableSubscribedClients.Any(c=> c.Client.Id == x.Id)).ToList();
+        try
+        {
+            isAddClientModalSubVisible = true;
+            availableClientsForAdditionSub = 
+                (await TrainingService.GetSubscribedClientsAsync())
+                .Where(x => !selectableSubscribedClients.Any(c=> c.Client.Id == x.Id)).ToList();
+        }
+        catch (Exception ex)
+        {
+            ErrorService.ShowError(ex, "Ошибка загрузки клиентов в абонементом");
+        }
     }
 
     private void OnAddClientModalChanged(bool visible)
@@ -302,6 +316,7 @@
         }
         catch (Exception ex)
         {
+            ErrorService.ShowError(ex, "Ошибка при проведении тренировки");
             errorMessage = $"Ошибка при проведении тренировки: {ex.Message}";
         }
     }

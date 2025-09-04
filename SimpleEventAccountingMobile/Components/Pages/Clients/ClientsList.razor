@@ -4,8 +4,10 @@
 @using SimpleEventAccountingMobile.Database.DbModels
 @using SimpleEventAccountingMobile.Database.Interfaces
 @using SimpleEventAccountingMobile.Dtos
+@using SimpleEventAccountingMobile.Services.Interfaces
 @inject IMainContext DbContext
 @inject NavigationManager NavigationManager
+@inject IErrorService ErrorService
 
 <PageTitle>Клиенты</PageTitle>
 
@@ -97,39 +99,46 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        // Загружаем только не удаленных клиентов
-        clients = await DbContext.Clients
-            .AsNoTracking()
-            .Where(c => c.DeletedAt == null)
-            .OrderBy(c => c.Name)
-            .ToListAsync();
-
-        clientsRel = await DbContext.Clients
-            .AsNoTracking()
-            .Where(c => c.DeletedAt == null)
-            .Include(x=>x.TrainingWallets)
-            .Include(x => x.CashWallets)
-            .OrderBy(c => c.Name)
-            .Select(x => new ClientRelationsDto
-            {
-                Id = x.Id,
-                Birthday = x.Birthday, 
-                Comment = x.Comment, 
-                Name = x.Name, 
-                TrainingIsSubscription = x.TrainingWallets!.FirstOrDefault()!.Subscription,
-                CashAmount = x.CashWallets!.FirstOrDefault()!.Cash,
-                TrainingCount = x.TrainingWallets!.FirstOrDefault()!.Count,
-                TrainingSkip = x.TrainingWallets!.FirstOrDefault()!.Skip
-            })
-            .ToListAsync();
-
-        clientsRel.ForEach(x=>
+        try
         {
-            x.TrainingIsSubscription ??= false;
-            x.CashAmount ??= 0;
-            x.TrainingCount ??= 0;
-            x.TrainingSkip ??= 0;
-        });
+            // Загружаем только не удаленных клиентов
+            clients = await DbContext.Clients
+                .AsNoTracking()
+                .Where(c => c.DeletedAt == null)
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+
+            clientsRel = await DbContext.Clients
+                .AsNoTracking()
+                .Where(c => c.DeletedAt == null)
+                .Include(x=>x.TrainingWallets)
+                .Include(x => x.CashWallets)
+                .OrderBy(c => c.Name)
+                .Select(x => new ClientRelationsDto
+                {
+                    Id = x.Id,
+                    Birthday = x.Birthday, 
+                    Comment = x.Comment, 
+                    Name = x.Name, 
+                    TrainingIsSubscription = x.TrainingWallets!.FirstOrDefault()!.Subscription,
+                    CashAmount = x.CashWallets!.FirstOrDefault()!.Cash,
+                    TrainingCount = x.TrainingWallets!.FirstOrDefault()!.Count,
+                    TrainingSkip = x.TrainingWallets!.FirstOrDefault()!.Skip
+                })
+                .ToListAsync();
+
+            clientsRel.ForEach(x=>
+            {
+                x.TrainingIsSubscription ??= false;
+                x.CashAmount ??= 0;
+                x.TrainingCount ??= 0;
+                x.TrainingSkip ??= 0;
+            });
+        }
+        catch (Exception ex)
+        {
+            ErrorService.ShowError(ex, "Ошибка загрузки клиентов");
+        }
     }
 
     private void HistoryClient(Guid clientId)
@@ -159,22 +168,29 @@ else
 
     private async Task ConfirmDelete(bool confirmed)
     {
-        if (confirmed && clientToDelete != null)
+        try
         {
-            // Используем "мягкое" удаление (soft delete)
-            var clientInDb = await DbContext.Clients.FindAsync(clientToDelete.Id);
-            if(clientInDb != null)
+            if (confirmed && clientToDelete != null)
             {
-                clientInDb.DeletedAt = DateTime.Now;
-                await DbContext.SaveChangesAsync();
+                // Используем "мягкое" удаление (soft delete)
+                var clientInDb = await DbContext.Clients.FindAsync(clientToDelete.Id);
+                if(clientInDb != null)
+                {
+                    clientInDb.DeletedAt = DateTime.Now;
+                    await DbContext.SaveChangesAsync();
 
-                // Обновляем UI, удаляя из локального списка
-                clients?.Remove(clientToDelete);
-                clientsRel.RemoveAll(x => x.Id == clientToDelete.Id);
+                    // Обновляем UI, удаляя из локального списка
+                    clients?.Remove(clientToDelete);
+                    clientsRel.RemoveAll(x => x.Id == clientToDelete.Id);
+                }
             }
-        }
 
-        // Сбрасываем клиента для удаления, чтобы скрыть диалог
-        clientToDelete = null;
+            // Сбрасываем клиента для удаления, чтобы скрыть диалог
+            clientToDelete = null;
+        }
+        catch (Exception ex)
+        {
+            ErrorService.ShowError(ex, "Ошибка удаления клиента");
+        }
     }
 }

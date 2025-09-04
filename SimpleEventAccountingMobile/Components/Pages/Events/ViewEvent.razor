@@ -3,6 +3,7 @@
 @using SimpleEventAccountingMobile.Services.Interfaces
 @inject IEventService EventService
 @inject NavigationManager NavigationManager
+@inject IErrorService ErrorService
 
 <PageTitle>Просмотр события</PageTitle>
 
@@ -98,20 +99,6 @@
                 Удалить
             </button>
         </div>
-
-        @* <div class="navigation">
-            <button class="back-button" @onclick="GoDelete">
-                <span class="back-icon">*</span>
-                Удалить
-            </button>
-        </div>
-
-        <div class="navigation">
-            <button class="back-button" @onclick="GoBack">
-                <span class="back-icon">←</span>
-                Назад к списку событий
-            </button>
-        </div> *@
     }
 </div>
 
@@ -131,6 +118,7 @@
         }
         catch (Exception ex)
         {
+            ErrorService.ShowError(ex, "Ошибка загрузки события");
             errorMessage = $"Ошибка при загрузке события: {ex.Message}";
         }
         finally

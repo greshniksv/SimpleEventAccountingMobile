@@ -3,6 +3,7 @@
 @using SimpleEventAccountingMobile.Services.Interfaces
 @inject IEventService EventService
 @inject NavigationManager NavigationManager
+@inject IErrorService ErrorService
 
 <PageTitle>События</PageTitle>
 
@@ -63,7 +64,6 @@ else
 @code {
     private List<Event>? events;
     private bool isLoading = true;
-    private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
@@ -73,7 +73,7 @@ else
         }
         catch (Exception ex)
         {
-            errorMessage = $"Ошибка при загрузке событий: {ex.Message}";
+            ErrorService.ShowError(ex, "Ошибка загрузки событий");
         }
         finally
         {

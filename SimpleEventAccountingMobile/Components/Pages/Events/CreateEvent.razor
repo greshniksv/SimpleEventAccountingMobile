@@ -7,6 +7,7 @@
 @inject IEventCreationHandler EventHandler
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JS
+@inject IErrorService ErrorService
 
 <PageTitle>Создать событие</PageTitle>
 
@@ -138,6 +139,7 @@
         }
         catch (Exception ex)
         {
+            ErrorService.ShowError(ex, "Ошибка загрузки страницы");
             errorMessage = $"Ошибка при загрузке клиентов: {ex.Message}";
         }
         finally
@@ -148,41 +150,76 @@
 
     private void ShowAddClientModal()
     {
-        StateManager.ShowAddClientModal();
+        try
+        {
+            StateManager.ShowAddClientModal();
+        }
+        catch (Exception ex)
+        {
+            ErrorService.ShowError(ex, "Ошибка отображения клиентов");
+        }
     }
 
     private void OnAddClientModalChanged(bool visible)
     {
-        if (!visible)
+        try
         {
-            StateManager.HideAddClientModal();
+            if (!visible)
+            {
+                StateManager.HideAddClientModal();
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorService.ShowError(ex, "Ошибка отображения клиентов");
         }
     }
 
     private async Task AddClientToSelectedClients(Client client)
     {
-        StateManager.AddClient(client);
-        await InvokeAsync(StateHasChanged);
+        try
+        {
+            StateManager.AddClient(client);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            ErrorService.ShowError(ex, "Ошибка добавления клиентов");
+        }
     }
 
     private void RemoveClient(Client client)
     {
-        StateManager.RemoveClient(client);
+        try
+        {
+            StateManager.RemoveClient(client);
+        }
+        catch (Exception ex)
+        {
+            ErrorService.ShowError(ex, "Ошибка удаления клиентов");
+        }
     }
 
     private async Task HandleValidSubmit()
     {
-        var clientIds = StateManager.GetSelectedClientIds();
-        var result = await EventHandler.CreateEventAsync(newEventModel, clientIds);
-        StateManager.ClearSelected();
+        try
+        {
+            var clientIds = StateManager.GetSelectedClientIds();
+            var result = await EventHandler.CreateEventAsync(newEventModel, clientIds);
+            StateManager.ClearSelected();
 
-        if (result.Success)
-        {
-            NavigationManager.NavigateTo("/events");
+            if (result.Success)
+            {
+                NavigationManager.NavigateTo("/events");
+            }
+            else
+            {
+                errorMessage = result.ErrorMessage;
+            }
         }
-        else
+        catch (Exception ex)
         {
-            errorMessage = result.ErrorMessage;
+            ErrorService.ShowError(ex, "Ошибка создания события");
         }
     }
 

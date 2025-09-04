@@ -2,6 +2,7 @@
 @using SimpleEventAccountingMobile.Dtos
 @using SimpleEventAccountingMobile.Services.Interfaces
 @inject ITrainingService TrainingService
+@inject IErrorService ErrorService
 
 <PageTitle>Должники - SimpleEvent</PageTitle>
 
@@ -165,8 +166,7 @@
         }
         catch (Exception ex)
         {
-            // Handle error (you might want to add error state handling)
-            Console.WriteLine($"Error loading debtors: {ex.Message}");
+            ErrorService.ShowError(ex, "Ошибка загрузки должников");
         }
     }
 }

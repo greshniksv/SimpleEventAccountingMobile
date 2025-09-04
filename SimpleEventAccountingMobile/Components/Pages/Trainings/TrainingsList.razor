@@ -3,6 +3,7 @@
 @using SimpleEventAccountingMobile.Database.DbModels
 @using SimpleEventAccountingMobile.Services.Interfaces
 @inject NavigationManager NavigationManager
+@inject IErrorService ErrorService
 
 <PageTitle>Тренировки</PageTitle>
 
@@ -66,7 +67,14 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        trainings = await TrainingService.GetTrainingsAsync();
+        try
+        {
+            trainings = await TrainingService.GetTrainingsAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorService.ShowError(ex, "Ошибка загрузки страницы");
+        }
     }
 
     private void GoToTraining(Guid trainingId)

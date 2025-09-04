@@ -1,12 +1,17 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
+using Serilog;
+using Serilog.Core;
+using Serilog.Events;
 using SimpleEventAccountingMobile.Database.DbContexts;
 using SimpleEventAccountingMobile.Database.Interfaces;
 using SimpleEventAccountingMobile.Services;
 using SimpleEventAccountingMobile.Services.Interfaces;
 using System.Diagnostics;
 using System.Globalization;
+using SimpleEventAccountingMobile.Models;
+using ILogger = Serilog.ILogger;
 
 namespace SimpleEventAccountingMobile
 {
@@ -14,6 +19,18 @@ namespace SimpleEventAccountingMobile
     {
         public static MauiApp CreateMauiApp()
         {
+            // Configure Serilog
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Debug()
+                .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+                .Enrich.FromLogContext()
+                .WriteTo.Async(a => a.File(
+                    Path.Combine(FileSystem.AppDataDirectory, "logs", "log-.txt"),
+                    rollingInterval: RollingInterval.Day,
+                    retainedFileCountLimit: 3,
+                    outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"))
+                .CreateLogger();
+
             var builder = MauiApp.CreateBuilder();
             builder
                 .UseMauiApp<App>()
@@ -32,8 +49,12 @@ namespace SimpleEventAccountingMobile
             builder.Services.AddScoped<ITrainingService, TrainingService>();
             builder.Services.AddScoped<IClientService, ClientService>();
             builder.Services.AddScoped<IEventService, EventService>();
+            builder.Services.AddSingleton<ILogFileService, LogFileService>();
+            builder.Services.AddTransient<LogFileBrowserViewModel>();
 
-            
+            // Add Serilog logging
+            builder.Services.AddSingleton<ILogger>(Log.Logger);
+
             builder.Services.AddLocalization();
             //builder.Services.AddSingleton<IStringLocalizer>(provider =>
             //{
@@ -47,11 +68,14 @@ namespace SimpleEventAccountingMobile
             builder.Services.AddSingleton<IImportExportService, ImportExportService>();
             builder.Services.AddSingleton<ILanguageService, LanguageService>();
             builder.Services.AddSingleton<IAppInfoService, AppInfoService>();
+            builder.Services.AddSingleton<IErrorService, ErrorService>();
 
             //var savedLanguage = Preferences.Get("AppLanguage", CultureInfo.CurrentCulture.Name);
             //var currentCulture = new CultureInfo(savedLanguage);
             //CultureInfo.DefaultThreadCurrentCulture = currentCulture;
             //CultureInfo.DefaultThreadCurrentUICulture = currentCulture;
+
+            Log.Logger.Information("Start application");
 
             // Настройка русской культуры
             var culture = new CultureInfo("ru-RU");
@@ -82,18 +106,13 @@ namespace SimpleEventAccountingMobile
             // Логирование ошибки (опционально)
             var exception = e.ExceptionObject as Exception;
             Debug.WriteLine($"Unhandled Exception: {exception?.Message}\n{exception?.StackTrace}");
-
-            // Перенаправление на страницу ошибок
-            // Возможно, потребуется доступ к NavigationManager
-
-            // В этом контексте сложно напрямую использовать NavigationManager,
-            // поэтому можно рассмотреть использование службы или навигации через MessageBus.
+            
+            Log.Logger.Fatal(exception, $"Unhandled Exception: {exception?.Message}\n{exception?.StackTrace}");
         }
 
         private static void OnTaskSchedulerUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
         {
-            // Логирование ошибки (опционально)
-            Debug.WriteLine($"Unobserved Task Exception: {e.Exception.Message}\n{e.Exception.StackTrace}");
+            Log.Logger.Fatal(e.Exception, $"Unobserved Task Exception: {e.Exception.Message}\n{e.Exception.StackTrace}");
 
             // Помечаем как обработанную
             e.SetObserved();

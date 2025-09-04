@@ -61,3 +61,25 @@
         transform: translateY(-1px);
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
+
+.logs-button {
+    background: linear-gradient(135deg, #1d8382, #2ec1bf);
+    color: white;
+    border: none;
+    padding: 12px 10px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+    .logs-button:hover {
+        background: linear-gradient(135deg, #1d8382, #2ec1bf);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 122, 204, 0.3);
+    }

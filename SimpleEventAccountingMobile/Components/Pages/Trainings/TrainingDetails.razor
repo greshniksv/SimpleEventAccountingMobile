@@ -3,6 +3,7 @@
 @using SimpleEventAccountingMobile.Database.DbModels
 @using SimpleEventAccountingMobile.Services.Interfaces
 @inject NavigationManager NavigationManager
+@inject IErrorService ErrorService
 
 <PageTitle>Детали тренировки</PageTitle>
 
@@ -72,27 +73,6 @@
         </div>
 
         <!-- Navigation -->
-        @*         <div class="navigation">
-            <NavLink href="/trainings" class="back-button">
-                <span class="back-icon">←</span>
-                Назад к списку тренировок
-            </NavLink>
-        </div> *@
-
-@*         <div class="navigation">
-            <button class="back-button" @onclick="GoDelete">
-                <span class="back-icon">←</span>
-                Удалить тренировку
-            </button>
-        </div>
-
-        <div class="navigation">
-            <button class="back-button" @onclick="GoBack">
-                <span class="back-icon">←</span>
-                Назад к списку тренировок
-            </button>
-        </div> *@
-
         <div class="action-buttons">
             <button type="button" class="back-button" @onclick="GoBack">
                 <span class="back-icon">←</span>
@@ -115,13 +95,20 @@
 
     protected override async Task OnInitializedAsync()
     {
-        training = await TrainingService.GetTrainingByIdAsync(TrainingId);
-        if (training != null)
+        try
         {
-            participants = training.TrainingWalletHistory
-                ?.Where(th => th.Date <= training.Date)
-                .OrderBy(th => th.Date)
-                .ToList();
+            training = await TrainingService.GetTrainingByIdAsync(TrainingId);
+            if (training != null)
+            {
+                participants = training.TrainingWalletHistory
+                    ?.Where(th => th.Date <= training.Date)
+                    .OrderBy(th => th.Date)
+                    .ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorService.ShowError(ex, "Ошибка загрузки страницы");
         }
     }
 

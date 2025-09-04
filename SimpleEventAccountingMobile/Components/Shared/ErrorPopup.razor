@@ -1,0 +1,50 @@
+﻿@using Microsoft.AspNetCore.Components
+@using SimpleEventAccountingMobile.Services.Interfaces
+@inject IErrorService ErrorService
+
+@if (_showError)
+{
+    <div class="error-overlay" @onclick="HideError">
+        <div class="error-popup" @onclick:stopPropagation="true">
+            <div class="error-header">
+                <h3>@_errorTitle</h3>
+                <button class="error-close" @onclick="HideError">×</button>
+            </div>
+            <div class="error-content">
+                <p>@_errorMessage</p>
+            </div>
+            <div class="error-actions">
+                <button class="error-ok-btn" @onclick="HideError">OK</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _showError = false;
+    private string _errorTitle = string.Empty;
+    private string _errorMessage = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        ErrorService.OnErrorChanged += HandleErrorChanged;
+    }
+
+    private void HandleErrorChanged(string title, string message)
+    {
+        _showError = !string.IsNullOrEmpty(message);
+        _errorTitle = title;
+        _errorMessage = message;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HideError()
+    {
+        ErrorService.HideError();
+    }
+
+    public void Dispose()
+    {
+        ErrorService.OnErrorChanged -= HandleErrorChanged;
+    }
+}

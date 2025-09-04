@@ -7,6 +7,7 @@
 @inject IEventService EventService
 @inject IMainContext Context
 @inject NavigationManager Navigation
+@inject IErrorService ErrorService
 
 <PageTitle>Удаление события</PageTitle>
 
@@ -87,7 +88,7 @@ else
     [Parameter]
     public Guid EventId { get; set; }
 
-    private Event eventDetails;
+    private Event? eventDetails;
     private List<ParticipantRefundInfo> participants = new();
 
     protected override async Task OnInitializedAsync()
@@ -104,8 +105,7 @@ else
         }
         catch (Exception ex)
         {
-            // Handle error (you might want to add error handling UI)
-            Console.WriteLine($"Error loading event: {ex.Message}");
+            ErrorService.ShowError(ex, "Ошибка загрузки события");
         }
     }
 
@@ -135,8 +135,7 @@ else
         }
         catch (Exception ex)
         {
-            // Handle error
-            Debug.WriteLine($"Error deleting event: {ex.Message}");
+            ErrorService.ShowError(ex, "Ошибка удаления события");
         }
     }
 

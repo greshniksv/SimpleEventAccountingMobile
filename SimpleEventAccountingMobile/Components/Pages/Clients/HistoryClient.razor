@@ -3,8 +3,10 @@
 @using SimpleEventAccountingMobile.Database.DbModels
 @using SimpleEventAccountingMobile.Database.Interfaces
 @using Microsoft.EntityFrameworkCore
+@using SimpleEventAccountingMobile.Services.Interfaces
 @inject IMainContext DbContext
 @inject NavigationManager NavigationManager
+@inject IErrorService ErrorService
 
 <PageTitle>История клиента</PageTitle>
 
@@ -154,29 +156,36 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        // Загрузка клиента
-        client = await DbContext.Clients
-            .FirstOrDefaultAsync(c => c.Id == ClientId);
-
-        if (client == null)
+        try
         {
-            // Если клиент не найден, можно перенаправить обратно или показать сообщение
-            // Здесь просто возвращаемся назад
-            NavigationManager.NavigateTo("/clients");
-            return;
+            // Загрузка клиента
+            client = await DbContext.Clients
+                .FirstOrDefaultAsync(c => c.Id == ClientId);
+
+            if (client == null)
+            {
+                // Если клиент не найден, можно перенаправить обратно или показать сообщение
+                // Здесь просто возвращаемся назад
+                NavigationManager.NavigateTo("/clients");
+                return;
+            }
+
+            // Загрузка истории наличных операций
+            cashHistory = await DbContext.CashWalletHistory
+                .Where(h => h.ClientId == ClientId)
+                .Include(h => h.Event) // Предполагается, что у вас есть навигационное свойство Event
+                .ToListAsync();
+
+            // Загрузка истории тренировочных операций
+            trainingHistory = await DbContext.TrainingWalletHistory
+                .Where(h => h.ClientId == ClientId)
+                .Include(h => h.Training) // Предполагается, что есть навигационное свойство Training
+                .ToListAsync();
         }
-
-        // Загрузка истории наличных операций
-        cashHistory = await DbContext.CashWalletHistory
-            .Where(h => h.ClientId == ClientId)
-            .Include(h => h.Event) // Предполагается, что у вас есть навигационное свойство Event
-            .ToListAsync();
-
-        // Загрузка истории тренировочных операций
-        trainingHistory = await DbContext.TrainingWalletHistory
-            .Where(h => h.ClientId == ClientId)
-            .Include(h => h.Training) // Предполагается, что есть навигационное свойство Training
-            .ToListAsync();
+        catch (Exception ex)
+        {
+            ErrorService.ShowError(ex, "Ошибка загрузки страницы");
+        }
     }
 
     private void GoBack()

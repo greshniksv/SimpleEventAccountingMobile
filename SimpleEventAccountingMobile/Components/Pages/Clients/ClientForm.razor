@@ -4,7 +4,9 @@
 @using Microsoft.EntityFrameworkCore
 @using SimpleEventAccountingMobile.Database.DbModels
 @using SimpleEventAccountingMobile.Database.Interfaces
+@using SimpleEventAccountingMobile.Services.Interfaces
 
+@inject IErrorService ErrorService
 @inject IMainContext DbContext
 @inject NavigationManager NavigationManager
 
@@ -211,6 +213,7 @@
         }
         catch (Exception ex)
         {
+            ErrorService.ShowError(ex, $"Ошибка при загрузке данных: {ex.Message}");
             errorMessage = $"Ошибка при загрузке данных: {ex.Message}";
         }
         finally
@@ -251,6 +254,7 @@
         }
         catch (Exception ex)
         {
+            ErrorService.ShowError(ex,  $"Ошибка при сохранении: {ex.Message}");
             errorMessage = $"Ошибка при сохранении: {ex.Message}";
         }
     }

@@ -47,6 +47,20 @@
         </button>
     </div>
     
+    <div class="mb-3">
+        <button type="button" class="logs-button" @onclick="GoToLogs">
+            <span class="submit-icon">📁</span>
+            Логирование
+        </button>
+    </div>
+    
+    <div class="mb-3">
+        <button type="button" class="logs-button" @onclick="GoToImportExport">
+            <span class="submit-icon">📥</span>
+            Импорт-Экспорт
+        </button>
+    </div>
+
     <div class="action-buttons">
         <button type="button" class="back-button" @onclick="GoHome">
             <span class="back-icon">←</span>
@@ -97,5 +111,15 @@
     private void GoDeleted()
     {
         NavigationManager.NavigateTo("/clients/deleted");
+    }
+
+    private void GoToLogs()
+    {
+        NavigationManager.NavigateTo("/log-files");
+    }
+
+    private void GoToImportExport()
+    {
+        NavigationManager.NavigateTo("/import-export");
     }
 }

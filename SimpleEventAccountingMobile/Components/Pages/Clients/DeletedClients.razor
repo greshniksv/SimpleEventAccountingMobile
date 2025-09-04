@@ -3,6 +3,7 @@
 @using SimpleEventAccountingMobile.Services.Interfaces
 @inject IClientService ClientService
 @inject NavigationManager NavigationManager
+@inject IErrorService ErrorService
 
 <PageTitle>Удаленные клиенты</PageTitle>
 
@@ -100,8 +101,7 @@
         }
         catch (Exception ex)
         {
-            // Handle error (you might want to add error handling UI)
-            Console.WriteLine($"Error loading deleted clients: {ex.Message}");
+            ErrorService.ShowError(ex, "Ошибка загрузки удаленных клиентов");
         }
         finally
         {
@@ -122,7 +122,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error restoring client: {ex.Message}");
+            ErrorService.ShowError(ex, "Ошибка восстановления клиента");
         }
     }
 
@@ -134,17 +134,5 @@
     private void EditClient(Guid clientId)
     {
         NavigationManager.NavigateTo($"/clients/edit/{clientId}/deleted");
-    }
-
-    private string GetInitials(string? name)
-    {
-        if (string.IsNullOrEmpty(name))
-            return "??";
-
-        var names = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (names.Length >= 2)
-            return $"{names[0][0]}{names[1][0]}".ToUpper();
-
-        return name.Length >= 2 ? name[..2].ToUpper() : name.ToUpper();
     }
 }

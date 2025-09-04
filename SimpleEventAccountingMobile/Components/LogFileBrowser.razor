@@ -1,0 +1,117 @@
+﻿@page "/log-files"
+@using SimpleEventAccountingMobile.Models
+@inject LogFileBrowserViewModel ViewModel
+
+<PageTitle>Log File Browser</PageTitle>
+
+<h3>Log File Browser</h3>
+
+<div class="card mb-3">
+    <div class="card-header">
+        <h5>Log Files Directory</h5>
+    </div>
+    <div class="card-body">
+        <p class="text-muted">@ViewModel.LogsDirectory</p>
+
+        @if (!ViewModel.Files.Any())
+        {
+            <div class="alert alert-warning">
+                No log files found in the directory.
+            </div>
+        }
+        else
+        {
+            <div class="mb-3">
+                <label for="fileSelect" class="form-label">Select Log File:</label>
+                <select id="fileSelect" class="form-select" @bind="ViewModel.SelectedFileName">
+                    <option value="">-- Select a file --</option>
+                    @foreach (var file in ViewModel.Files.OrderByDescending(f => f.LastWriteTime))
+                    {
+                        <option value="@file.Name">@ViewModel.GetFileDisplayName(file)</option>
+                    }
+                </select>
+            </div>
+
+            <button class="btn btn-primary" @onclick="ReadFile" disabled="@string.IsNullOrEmpty(ViewModel.SelectedFileName)">
+                Read First 100 Lines
+            </button>
+
+            @if (!string.IsNullOrEmpty(ViewModel.SelectedFileName))
+            {
+                <button class="btn btn-danger ms-2" @onclick="ClearSelection">
+                    Clear Selection
+                </button>
+            }
+        }
+    </div>
+</div>
+
+@if (ViewModel.FileContent.Any())
+{
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5>File Content: @ViewModel.SelectedFileName</h5>
+            <span class="badge bg-info">Line @ViewModel.CurrentLineNumber to @(ViewModel.CurrentLineNumber + ViewModel.FileContent.Count - 1)</span>
+        </div>
+        <div class="card-body">
+            <div class="log-content" style="max-height: 400px; overflow-y: auto; font-family: monospace; font-size: 0.9em; background-color: #f8f9fa; padding: 10px; border-radius: 5px;">
+                @foreach (var line in ViewModel.FileContent)
+                {
+                    <div class="log-line">@line</div>
+                }
+            </div>
+
+            <div class="mt-3 d-flex justify-content-between align-items-center">
+                <button class="btn btn-outline-primary" @onclick="ReadPrevious" disabled="@(!ViewModel.HasPreviousLines())">
+                    ← Previous 100 Lines
+                </button>
+
+                <span class="text-muted">
+                    Showing @ViewModel.FileContent.Count lines
+                </span>
+
+                <button class="btn btn-outline-primary" @onclick="ReadNext" disabled="@(!ViewModel.HasMoreLines())">
+                    Next 100 Lines →
+                </button>
+            </div>
+
+            <div class="mt-2">
+                <button class="btn btn-warning" @onclick="ReloadFile">
+                    Reload Current File
+                </button>
+                <button class="btn btn-secondary ms-2" @onclick="ClearContent">
+                    Clear Content
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(ViewModel.ErrorMessage))
+{
+    <div class="alert alert-danger mt-3">
+        <strong>Error:</strong> @ViewModel.ErrorMessage
+    </div>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        ViewModel.OnStateChanged += StateHasChanged;
+        ViewModel.LoadLogFiles();
+    }
+
+    private async Task ReadFile() => await ViewModel.ReadFile();
+    private async Task ReadNext() => await ViewModel.ReadNext();
+    private async Task ReadPrevious() => await ViewModel.ReadPrevious();
+    private async Task ReloadFile() => await ViewModel.ReloadFile();
+    private void ClearContent() => ViewModel.ClearContent();
+    private void ClearSelection() => ViewModel.ClearSelection();
+
+    public void Dispose()
+    {
+        ViewModel.OnStateChanged -= StateHasChanged;
+    }
+
+}
