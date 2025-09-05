@@ -81,6 +81,13 @@
     </div>
 </div>
 
+<div class="action-buttons">
+    <button type="button" class="back-button" @onclick="GoHome">
+        <span class="back-icon">←</span>
+        Назад
+    </button>
+</div>
+
 @code {
     private List<Client>? _deletedClients;
     private bool _isLoading = true;
@@ -134,5 +141,10 @@
     private void EditClient(Guid clientId)
     {
         NavigationManager.NavigateTo($"/clients/edit/{clientId}/deleted");
+    }
+
+    private void GoHome()
+    {
+        NavigationManager.NavigateTo("/settings");
     }
 }

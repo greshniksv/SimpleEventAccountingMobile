@@ -53,6 +53,13 @@
     </div>
 }
 
+<div class="action-buttons">
+    <button type="button" class="back-button" @onclick="GoBack">
+        <span class="back-icon">←</span>
+        Назад
+    </button>
+</div>
+
 @code {
     private bool _isExporting = false;
     private bool _isImporting = false;
@@ -121,5 +128,10 @@
         {
             _isImporting = false;
         }
+    }
+
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/settings");
     }
 }

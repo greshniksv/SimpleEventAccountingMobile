@@ -1,7 +1,7 @@
 ﻿/* Pages/Index.razor.css */
 
 .hero-container {
-    display: flex;
+    /*display: flex;*/
     align-items: center;
     justify-content: center;
     min-height: 85vh; /* Занимает почти всю высоту экрана */
@@ -62,5 +62,36 @@
 
     .hero-subtitle {
         font-size: 1.1rem;
+    }
+}
+
+.footer {
+    text-align: center;
+}
+
+/* Version container styles */
+.version-container {
+    display: none;
+    text-align: center;
+    padding: 1rem;
+    /*margin: 0 1rem 1rem 1rem;*/
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    margin-top: 30vh;
+   
+}
+
+.version-text {
+    margin-top: 100px;
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin: 0;
+    font-style: italic;
+}
+
+@media (max-width: 768px) {
+    .version-container {
+        display: block;
     }
 }

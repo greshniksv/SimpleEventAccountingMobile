@@ -83,3 +83,26 @@
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0, 122, 204, 0.3);
     }
+
+
+.default-button {
+    background: linear-gradient(135deg, #6c74ff, #babeff);
+    color: white;
+    border: none;
+    padding: 12px 10px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+    .default-button:hover {
+        background: linear-gradient(135deg, #6c74ff, #babeff);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 122, 204, 0.3);
+    }

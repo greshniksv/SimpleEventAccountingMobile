@@ -1,6 +1,7 @@
 ﻿@page "/log-files"
 @using SimpleEventAccountingMobile.Models
 @inject LogFileBrowserViewModel ViewModel
+@inject NavigationManager NavigationManager
 
 <PageTitle>Log File Browser</PageTitle>
 
@@ -94,6 +95,13 @@
     </div>
 }
 
+<div class="action-buttons">
+    <button type="button" class="back-button" @onclick="GoBack">
+        <span class="back-icon">←</span>
+        Назад
+    </button>
+</div>
+
 @code {
     protected override void OnInitialized()
     {
@@ -114,4 +122,8 @@
         ViewModel.OnStateChanged -= StateHasChanged;
     }
 
+    private void GoBack()
+    {
+        NavigationManager.NavigateTo("/settings");
+    }
 }

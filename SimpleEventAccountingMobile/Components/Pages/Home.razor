@@ -1,7 +1,10 @@
 ﻿@page "/"
 @using Microsoft.Extensions.Localization
+@using SimpleEventAccountingMobile.Services.Interfaces
 @inject NavigationManager NavigationManager
 @inject IStringLocalizer Localizer
+@inject IAppInfoService AppInfoService
+@inject IErrorService ErrorService
 
 <PageTitle>Главная</PageTitle>
 
@@ -25,11 +28,31 @@
             <span class="bi bi-universal-access-circle" aria-hidden="true"></span>
             Провести тренировку
         </button>
-       
+
+    </div>
+
+    <!-- Version information at the bottom -->
+    <div class="version-container">
+        <p class="version-text">Версия: @_appVersion</p>
     </div>
 </div>
 
 @code {
+
+    string? _appVersion;
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            _appVersion = AppInfoService.GetAppVersion();
+        }
+        catch (Exception ex)
+        {
+            ErrorService.ShowError(ex, "Ошибка загрузки страницы");
+        }
+    }
+
     private void GoToClients()
     {
         NavigationManager.NavigateTo("/clients");
@@ -44,5 +67,5 @@
     {
         NavigationManager.NavigateTo("/create-event");
     }
-    
+
 }
