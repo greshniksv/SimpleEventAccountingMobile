@@ -2,6 +2,7 @@
 @page "/clients/edit/{ClientId:guid}"
 @page "/clients/edit/{ClientId:guid}/{CameFrom}"
 @using SimpleEventAccountingMobile.Database.DbModels
+@using SimpleEventAccountingMobile.Dtos
 @using SimpleEventAccountingMobile.Services.Interfaces
 
 @inject IErrorService ErrorService
@@ -24,7 +25,7 @@
             <h1 class="page-title">@Title</h1>
         </div>
 
-        <EditForm Model="@clientModel" OnValidSubmit="HandleValidSubmit">
+        <EditForm Model="@clientDto" OnValidSubmit="HandleValidSubmit">
             <DataAnnotationsValidator />
             <ValidationSummary />
 
@@ -43,20 +44,20 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label class="form-label">Имя:</label>
-                        <InputText id="name" class="form-control" @bind-Value="clientModel.Name" />
-                        <ValidationMessage For="@(() => clientModel.Name)" />
+                        <InputText id="name" class="form-control" @bind-Value="clientDto.Name" />
+                        <ValidationMessage For="@(() => clientDto.Name)" />
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">Дата рождения:</label>
-                        <InputDate id="birthday" class="form-control" @bind-Value="clientModel.Birthday" />
-                        <ValidationMessage For="@(() => clientModel.Birthday)" />
+                        <InputDate id="birthday" class="form-control" @bind-Value="clientDto.Birthday" />
+                        <ValidationMessage For="@(() => clientDto.Birthday)" />
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">Комментарий:</label>
-                        <InputTextArea id="comment" class="form-control" @bind-Value="clientModel.Comment" />
-                        <ValidationMessage For="@(() => clientModel.Comment)" />
+                        <InputTextArea id="comment" class="form-control" @bind-Value="clientDto.Comment" />
+                        <ValidationMessage For="@(() => clientDto.Comment)" />
                     </div>
                 </div>
             </div>
@@ -67,32 +68,32 @@
                 <div class="form-grid">
                     <div class="form-group checkbox-group">
                         <label class="form-label">Есть ли подписка:</label>
-                        <InputCheckbox id="subscription" @bind-Value="trainingWallet.Subscription" class="form-checkbox" />
-                        <ValidationMessage For="@(() => trainingWallet.Subscription)" />
+                        <InputCheckbox id="subscription" @bind-Value="clientDto.Subscription" class="form-checkbox" />
+                        <ValidationMessage For="@(() => clientDto.Subscription)" />
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">Доступно кол-во занятий:</label>
-                        <InputNumber id="sub_count" class="form-control" @bind-Value="Count" />
-                        <ValidationMessage For="@(() => Count)" />
+                        <InputNumber id="sub_count" class="form-control" @bind-Value="clientDto.TrainingCount" />
+                        <ValidationMessage For="@(() => clientDto.TrainingCount)" />
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">Доступно пропусков:</label>
-                        <InputNumber id="sub_skip" class="form-control" @bind-Value="Skip" />
-                        <ValidationMessage For="@(() => Skip)" />
+                        <InputNumber id="sub_skip" class="form-control" @bind-Value="clientDto.TrainingSkip" />
+                        <ValidationMessage For="@(() => clientDto.TrainingSkip)" />
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">Доступно бесплатных:</label>
-                        <InputNumber id="sub_free" class="form-control" @bind-Value="Free" />
-                        <ValidationMessage For="@(() => Free)" />
+                        <InputNumber id="sub_free" class="form-control" @bind-Value="clientDto.TrainingFree" />
+                        <ValidationMessage For="@(() => clientDto.TrainingFree)" />
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">Наличка:</label>
-                        <InputNumber id="cash" class="form-control" @bind-Value="Cash" />
-                        <ValidationMessage For="@(() => Cash)" />
+                        <InputNumber id="cash" class="form-control" @bind-Value="clientDto.CashAmount" />
+                        <ValidationMessage For="@(() => clientDto.CashAmount)" />
                     </div>
                 </div>
             </div>
@@ -118,37 +119,9 @@
     [Parameter]
     public string? CameFrom { get; set; }
 
-    public int Cash
-    {
-        get { return Convert.ToInt32(cashWallet.Cash); }
-        set { cashWallet.Cash = value; }
-    }
-
-    public int Free
-    {
-        get { return Convert.ToInt32(trainingWallet.Free); }
-        set { trainingWallet.Free = value; }
-    }
-
-    public int Skip
-    {
-        get { return Convert.ToInt32(trainingWallet.Skip); }
-        set { trainingWallet.Skip = value; }
-    }
-
-    public int Count
-    {
-        get { return Convert.ToInt32(trainingWallet.Count); }
-        set { trainingWallet.Count = value; }
-    }
-
-    private Client? clientModel;
+    private FullClientDto clientDto = new();
     private string Title = string.Empty;
     private bool IsNewClient => ClientId == Guid.Empty;
-    private CashWallet? cashWallet;
-    private TrainingWallet? trainingWallet;
-    private CashWallet? cashWalletOld;
-    private TrainingWallet? trainingWalletOld;
     private string? errorMessage;
     private bool isLoading = true;
 
@@ -159,51 +132,25 @@
             if (IsNewClient)
             {
                 Title = "Добавить нового клиента";
-                clientModel = new Client
+                clientDto = new FullClientDto
                 {
                     Birthday = DateTime.Today
                 };
-
-                cashWallet = new CashWallet();
-                trainingWallet = new TrainingWallet();
-
-                clientModel.CashWallets ??= new List<CashWallet>();
-                clientModel.CashWallets.Add(cashWallet);
-
-                clientModel.TrainingWallets ??= new List<TrainingWallet>();
-                clientModel.TrainingWallets.Add(trainingWallet);
             }
             else
             {
                 Title = "Редактировать клиента";
-                clientModel = await ClientService.GetClientByIdAsync(ClientId);
+                var client = await ClientService.GetClientByIdAsync(ClientId);
 
-                if (clientModel == null)
+                if (client == null)
                 {
                     errorMessage = "Клиент не найден";
                     return;
                 }
 
-                cashWallet = clientModel.CashWallets.FirstOrDefault();
-                trainingWallet = clientModel.TrainingWallets.FirstOrDefault();
-
-                if (cashWallet == null)
-                {
-                    cashWallet = new CashWallet();
-                    clientModel.CashWallets ??= new List<CashWallet>();
-                    clientModel.CashWallets.Add(cashWallet);
-                }
-
-                if (trainingWallet == null)
-                {
-                    trainingWallet = new TrainingWallet();
-                    clientModel.TrainingWallets ??= new List<TrainingWallet>();
-                    clientModel.TrainingWallets.Add(trainingWallet);                
-                }
+                clientDto = client;
             }
 
-            cashWalletOld = (CashWallet)cashWallet.Clone();
-            trainingWalletOld = (TrainingWallet)trainingWallet.Clone();
         }
         catch (Exception ex)
         {
@@ -220,27 +167,13 @@
     {
         try
         {
-            if (clientModel == null) return;
-
-            if (!cashWalletOld.Equals(cashWallet))
-            {
-                clientModel.CashWalletHistory ??= new List<CashWalletHistory>();
-                clientModel.CashWalletHistory.Add(ClientService.CreateCashWalletHistory(cashWallet));
-            }
-
-            if (!trainingWalletOld.Equals(trainingWallet))
-            {
-                clientModel.TrainingWalletHistory ??= new List<TrainingWalletHistory>();
-                clientModel.TrainingWalletHistory.Add(ClientService.CreateTrainingWalletHistory(trainingWallet));
-            }
-
             if (IsNewClient)
             {
-                await ClientService.CreateClientAsync(clientModel);
+                await ClientService.CreateClientAsync(clientDto);
             }
             else
             {
-                await ClientService.UpdateClientAsync(clientModel);
+                await ClientService.UpdateClientAsync(clientDto);
             }
 
             NavigateToList();

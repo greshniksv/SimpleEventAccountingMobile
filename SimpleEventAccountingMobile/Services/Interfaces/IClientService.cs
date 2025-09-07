@@ -1,4 +1,5 @@
 ﻿using SimpleEventAccountingMobile.Database.DbModels;
+using SimpleEventAccountingMobile.Dtos;
 
 namespace SimpleEventAccountingMobile.Services.Interfaces
 {
@@ -10,11 +11,11 @@ namespace SimpleEventAccountingMobile.Services.Interfaces
 
         Task RestoreDeletedAsync(Guid clientId);
 
-        Task<Client?> GetClientByIdAsync(Guid clientId, bool includeWallets = true);
+        Task<FullClientDto?> GetClientByIdAsync(Guid clientId);
 
-        Task<Guid> CreateClientAsync(Client client);
+        Task<Guid> CreateClientAsync(FullClientDto clientDto);
 
-        Task UpdateClientAsync(Client client);
+        Task UpdateClientAsync(FullClientDto clientDto);
 
         TrainingWalletHistory CreateTrainingWalletHistory(TrainingWallet wallet, string comment = "Ручное изменение");
 

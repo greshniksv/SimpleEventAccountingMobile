@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using SimpleEventAccountingMobile.Database.DbContexts;
 using SimpleEventAccountingMobile.Database.DbModels;
+using SimpleEventAccountingMobile.Dtos;
 using SimpleEventAccountingMobile.Services.Interfaces;
 
 namespace SimpleEventAccountingMobile.Services
@@ -50,39 +51,74 @@ namespace SimpleEventAccountingMobile.Services
             _logger.LogInformation("Client restored successfully: {ClientId}", clientId);
         }
 
-        public async Task<Client?> GetClientByIdAsync(Guid clientId, bool includeWallets = true)
+        public async Task<FullClientDto?> GetClientByIdAsync(Guid clientId)
         {
             _logger.LogInformation("Getting client by ID: {ClientId}", clientId);
 
-            var query = _context.Clients.AsNoTracking();
-
-            if (includeWallets)
-            {
-                query = query
-                    .Include(x => x.TrainingWallets)
-                    .Include(x => x.CashWallets);
-            }
-
-            var client = await query.FirstOrDefaultAsync(x => x.Id == clientId);
+            var client = await _context.Clients
+                .AsNoTracking()
+                .Include(x => x.TrainingWallets)
+                .Include(x => x.CashWallets)
+                .Include(x => x.TrainingWalletHistory)
+                .Include(x => x.CashWalletHistory)
+                .FirstOrDefaultAsync(x => x.Id == clientId);
 
             if (client == null)
             {
                 _logger.LogWarning("Client not found: {ClientId}", clientId);
-            }
-            else
-            {
-                _logger.LogInformation("Client found: {ClientId}", clientId);
+                return null;
             }
 
-            return client;
+            var trainingWallet = client.TrainingWallets.FirstOrDefault();
+            var cashWallet = client.CashWallets.FirstOrDefault();
+
+            var dto = new FullClientDto
+            {
+                Id = client.Id,
+                Name = client.Name,
+                Birthday = client.Birthday,
+                Comment = client.Comment,
+                Subscription = trainingWallet?.Subscription ?? false,
+                TrainingCount = (int?)trainingWallet?.Count ?? 0,
+                TrainingSkip = (int?)trainingWallet?.Skip ?? 0,
+                TrainingFree = (int?)trainingWallet?.Free ?? 0,
+                CashAmount = (int?)cashWallet?.Cash ?? 0
+            };
+
+            _logger.LogInformation("Client found: {ClientId}", clientId);
+            return dto;
         }
 
-        public async Task<Guid> CreateClientAsync(Client client)
+        public async Task<Guid> CreateClientAsync(FullClientDto clientDto)
         {
-            _logger.LogInformation("Creating new client: {ClientName}", client.Name);
+            _logger.LogInformation("Creating new client: {ClientName}", clientDto.Name);
 
             try
             {
+                var client = new Client
+                {
+                    Name = clientDto.Name,
+                    Birthday = clientDto.Birthday,
+                    Comment = clientDto.Comment,
+                    TrainingWallets = new List<TrainingWallet>
+                    {
+                        new TrainingWallet
+                        {
+                            Subscription = clientDto.Subscription,
+                            Count = clientDto.TrainingCount,
+                            Skip = clientDto.TrainingSkip,
+                            Free = clientDto.TrainingFree
+                        }
+                    },
+                    CashWallets = new List<CashWallet>
+                    {
+                        new CashWallet
+                        {
+                            Cash = clientDto.CashAmount
+                        }
+                    }
+                };
+
                 await _context.Clients.AddAsync(client);
                 await _context.SaveChangesAsync();
 
@@ -91,25 +127,74 @@ namespace SimpleEventAccountingMobile.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating client: {ClientName}", client.Name);
+                _logger.LogError(ex, "Error creating client: {ClientName}", clientDto.Name);
                 throw;
             }
         }
 
-        public async Task UpdateClientAsync(Client client)
+        public async Task UpdateClientAsync(FullClientDto clientDto)
         {
-            _logger.LogInformation("Updating client: {ClientId}", client.Id);
+            _logger.LogInformation("Updating client: {ClientId}", clientDto.Id);
 
             try
             {
+                var client = await _context.Clients
+                    .Include(x => x.TrainingWallets)
+                    .Include(x => x.CashWallets)
+                    .FirstOrDefaultAsync(x => x.Id == clientDto.Id);
+
+                if (client == null)
+                {
+                    throw new Exception($"Client with ID {clientDto.Id} not found");
+                }
+
+                // Update basic client info
+                client.Name = clientDto.Name;
+                client.Birthday = clientDto.Birthday;
+                client.Comment = clientDto.Comment;
+
+                // Update training wallet
+                var trainingWallet = client.TrainingWallets.FirstOrDefault();
+                if (trainingWallet != null)
+                {
+                    // Check if wallet changed and create history
+                    if (trainingWallet.Subscription != clientDto.Subscription ||
+                        trainingWallet.Count != clientDto.TrainingCount ||
+                        trainingWallet.Skip != clientDto.TrainingSkip ||
+                        trainingWallet.Free != clientDto.TrainingFree)
+                    {
+                        client.TrainingWalletHistory ??= new List<TrainingWalletHistory>();
+                        client.TrainingWalletHistory.Add(CreateTrainingWalletHistory(trainingWallet));
+                    }
+
+                    trainingWallet.Subscription = clientDto.Subscription;
+                    trainingWallet.Count = clientDto.TrainingCount;
+                    trainingWallet.Skip = clientDto.TrainingSkip;
+                    trainingWallet.Free = clientDto.TrainingFree;
+                }
+
+                // Update cash wallet
+                var cashWallet = client.CashWallets.FirstOrDefault();
+                if (cashWallet != null)
+                {
+                    // Check if wallet changed and create history
+                    if (cashWallet.Cash != clientDto.CashAmount)
+                    {
+                        client.CashWalletHistory ??= new List<CashWalletHistory>();
+                        client.CashWalletHistory.Add(CreateCashWalletHistory(cashWallet));
+                    }
+
+                    cashWallet.Cash = clientDto.CashAmount;
+                }
+
                 _context.Clients.Update(client);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("Client updated successfully: {ClientId}", client.Id);
+                _logger.LogInformation("Client updated successfully: {ClientId}", clientDto.Id);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating client: {ClientId}", client.Id);
+                _logger.LogError(ex, "Error updating client: {ClientId}", clientDto.Id);
                 throw;
             }
         }
