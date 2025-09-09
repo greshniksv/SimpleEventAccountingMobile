@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SimpleEventAccountingMobile.Database.DbContexts;
 
@@ -10,9 +11,11 @@ using SimpleEventAccountingMobile.Database.DbContexts;
 namespace SimpleEventAccountingMobile.Migrations
 {
     [DbContext(typeof(MainContext))]
-    partial class MainContextModelSnapshot : ModelSnapshot
+    [Migration("20250909095217_AddSettingsAndGroups")]
+    partial class AddSettingsAndGroups
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.8");
@@ -111,7 +114,7 @@ namespace SimpleEventAccountingMobile.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ClientGroups");
+                    b.ToTable("ClientGroup");
                 });
 
             modelBuilder.Entity("SimpleEventAccountingMobile.Database.DbModels.ClientGroupBinding", b =>
@@ -132,7 +135,7 @@ namespace SimpleEventAccountingMobile.Migrations
 
                     b.HasIndex("ClientId");
 
-                    b.ToTable("ClientGroupBindings");
+                    b.ToTable("ClientGroupBinding");
                 });
 
             modelBuilder.Entity("SimpleEventAccountingMobile.Database.DbModels.Event", b =>

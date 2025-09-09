@@ -1,0 +1,486 @@
+﻿@page "/groups"
+@using SimpleEventAccountingMobile.Database.DbModels
+@using SimpleEventAccountingMobile.Dtos
+@using SimpleEventAccountingMobile.Services.Interfaces
+@inject IClientGroupBindingService ClientGroupBindingService
+@inject IClientService ClientService
+@inject IErrorService ErrorService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Группы клиентов</PageTitle>
+
+<div class="page-header">
+    <h1 class="page-title">Группы клиентов</h1>
+</div>
+
+@if (clientGroups == null)
+{
+    <p><em>Загрузка...</em></p>
+}
+else if (!clientGroups.Any())
+{
+    <p><em>Группы не найдены. Добавьте первую группу!</em></p>
+}
+else
+{
+    <div class="accordion-container">
+        @foreach (var item in clientGroups)
+        {
+            <div class="accordion-item">
+                <div class="accordion-header @(expandedGroupId == item.Group.Id ? "selected-item" : "")" 
+                        @onclick="() => ToggleGroup(item.Group.Id)">
+                    <span class="accordion-title">@item.Group?.Name</span>
+                    <button class="btn btn-sm btn-secondary button-icon btn-edit"
+                            @onclick="() => ShowEditGroupPopup(item.Group.Id)">
+                        <span class="bi bi-pencil" aria-hidden="true"></span>
+                    </button>
+                    <button class="btn btn-sm btn-danger button-icon btn-delete"
+                            @onclick="() => DeleteGroupPopup(item.Group.Id, item.Group.Name)">
+                        <span class="bi bi-trash" aria-hidden="true"></span>
+                    </button>
+
+                    <span class="accordion-icon">
+                        @(expandedGroupId == item.Group.Id ? "▼" : "►")
+                    </span>
+                </div>
+
+                @if (expandedGroupId == item.Group.Id)
+                {
+                    <div class="accordion-content">
+                        <div class="clients-list">
+                            <h4>Клиенты в группе:</h4>
+
+                            @if (item.Clients?.Any() == true)
+                            {
+                                <table class="table-main table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Имя</th>
+                                            <th class="action-column">Действия</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var client in item.Clients)
+                                        {
+                                            <tr>
+                                                <td>@client.Name</td>
+                                                <td class="action-row">
+                                                    <button class="btn btn-sm btn-danger button-icon"
+                                                            @onclick="() => PromptRemoveClient(item.Group.Id, client.Id, client.Name)">
+                                                        <span class="bi bi-trash" aria-hidden="true"></span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            }
+                            else
+                            {
+                                <p>В группе нет клиентов</p>
+                            }
+
+                            <button class="btn btn-primary" @onclick="() => ShowAddClientPopup(item.Group.Id)">
+                                <span class="bi bi-plus"></span>
+                                Добавить клиента
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}
+
+<div class="action-buttons">
+    <button type="button" class="back-button" @onclick="NavigateToHome">
+        <span class="back-icon">←</span>
+        Отмена
+    </button>
+    <button type="submit" class="save-button" @onclick="ShowCreateGroupPopup">
+        <span class="save-icon">+</span>
+        Добавить
+    </button>
+</div>
+
+@if (showRemoveConfirmation)
+{
+    <DeleteConfirmation Title="Подтвердите удаление"
+                        OnConfirmationChanged="ConfirmRemoveClient">
+        <p>Вы уверены, что хотите удалить клиента <strong>@clientToRemoveName</strong> из группы?</p>
+    </DeleteConfirmation>
+}
+
+@if (showGroupRemoveConfirmation)
+{
+    <DeleteConfirmation Title="Подтвердите удаление"
+                        OnConfirmationChanged="ConfirmRemoveGroup">
+        <p>Вы уверены, что хотите удалить группу <strong>@groupNameToRemove</strong>?</p>
+    </DeleteConfirmation>
+}
+
+@if (showAddClientPopup)
+{
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Добавить клиента в группу</h3>
+                <button class="modal-close" @onclick="CloseAddClientPopup">×</button>
+            </div>
+            <div class="modal-body">
+                @if (availableClients == null)
+                {
+                    <p>Загрузка клиентов...</p>
+                }
+                else if (!availableClients.Any())
+                {
+                    <p>Нет доступных клиентов для добавления</p>
+                }
+                else
+                {
+                    <table class="table-main table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Имя</th>
+                                <th class="action-column">Действие</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var client in availableClients)
+                            {
+                                <tr>
+                                    <td>@client.Name</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-success button-icon"
+                                                @onclick="() => AddClientToGroup(client.Id)">
+                                            <span class="bi bi-plus" aria-hidden="true"></span>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@if (showCreateGroupPopup)
+{
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>@(newGroup.Id == Guid.Empty ? "Создать" : "Изменить") группу</h3>
+                <button class="modal-close" @onclick="CloseCreateGroupPopup">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="groupName">Название группы *</label>
+                    <input type="text" id="groupName" class="form-control"
+                           @bind="newGroup.Name" placeholder="Введите название группы" />
+                    @if (!string.IsNullOrEmpty(validationErrors.GetValueOrDefault("Name")))
+                    {
+                        <span class="validation-error">@validationErrors.GetValueOrDefault("Name")</span>
+                    }
+                </div>
+
+                <div class="form-group">
+                    <label for="groupDescription">Описание</label>
+                    <textarea id="groupDescription" class="form-control"
+                              @bind="newGroup.Description"
+                              placeholder="Введите описание группы (необязательно)"
+                              rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" @onclick="CloseCreateGroupPopup">Отмена</button>
+                <button class="btn btn-primary" @onclick="CreateNewGroup">
+                     @(newGroup.Id == Guid.Empty ? "Создать" : "Изменить")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<GroupedClient> clientGroups;
+    private List<Client> availableClients;
+    private Guid? expandedGroupId;
+    private bool showRemoveConfirmation;
+    private bool showAddClientPopup;
+    private Guid currentGroupId;
+    private Guid clientToRemoveId;
+    private string clientToRemoveName;
+
+    private Guid groupToRemove;
+    private string groupNameToRemove;
+    private bool showGroupRemoveConfirmation;
+
+    private bool showCreateGroupPopup;
+    private ClientGroup newGroup = new ClientGroup();
+    private Dictionary<string, string> validationErrors = new Dictionary<string, string>();
+
+    private class GroupedClient
+    {
+        public ClientGroup Group { get; set; }
+        public List<Client> Clients { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await LoadClientGroups();
+        }
+        catch (Exception ex)
+        {
+            ErrorService.ShowError(ex, "Ошибка загрузки групп клиентов");
+        }
+    }
+
+    private async Task LoadClientGroups()
+    {
+        var gg = await ClientGroupBindingService.GetAllAsync();
+
+        // Группируем по группам
+        clientGroups = gg
+            .GroupBy(g => g.ClientGroupId)
+            .Select(g => new GroupedClient
+            {
+                Group = gg.First(x=>x.ClientGroupId == g.Key).ClientGroup,
+                Clients = g.Select(x => x.Client).Where(c => c != null).ToList()
+            })
+            .ToList();
+    }
+
+
+    private void DeleteGroupPopup(Guid id, string name)
+    {
+        showGroupRemoveConfirmation = true;
+        groupToRemove = id;
+        groupNameToRemove = name;
+    }
+
+    private void ToggleGroup(Guid groupId)
+    {
+        if (expandedGroupId == groupId)
+        {
+            expandedGroupId = null;
+        }
+        else
+        {
+            expandedGroupId = groupId;
+        }
+    }
+
+    private void PromptRemoveClient(Guid groupId, Guid clientId, string clientName)
+    {
+        currentGroupId = groupId;
+        clientToRemoveId = clientId;
+        clientToRemoveName = clientName;
+        showRemoveConfirmation = true;
+    }
+
+    private async Task ConfirmRemoveGroup(bool confirmed)
+    {
+        if (confirmed)
+        {
+            try
+            {
+                // Удаляем binding из базы
+                await ClientGroupBindingService.DeleteAsync(groupToRemove);
+
+                // Обновляем UI
+                await LoadClientGroups();
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                ErrorService.ShowError(ex, "Ошибка удаления группы");
+            }
+        }
+
+        showGroupRemoveConfirmation = false;
+        groupToRemove = Guid.Empty;
+        groupNameToRemove = string.Empty;
+    }
+
+    private async Task ConfirmRemoveClient(bool confirmed)
+    {
+        if (confirmed)
+        {
+            try
+            {
+                // Удаляем binding из базы
+                var group = await ClientGroupBindingService.GetGroupAsync(currentGroupId);
+
+                await ClientGroupBindingService.UpdateAsync(new ClientGroupDto()
+                {
+                    Id = currentGroupId,
+                    Name = group.Name,
+                    Description = group.Description,
+                    Clients = group.ClientGroupBindings
+                        .Where(x => x.ClientId != clientToRemoveId)
+                        .Select(x => x.ClientId).ToList()
+                });
+
+                // Обновляем UI
+                await LoadClientGroups();
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                ErrorService.ShowError(ex, "Ошибка удаления клиента из группы");
+            }
+        }
+
+        showRemoveConfirmation = false;
+        clientToRemoveId = Guid.Empty;
+        clientToRemoveName = string.Empty;
+    }
+
+    private async void ShowAddClientPopup(Guid groupId)
+    {
+        currentGroupId = groupId;
+
+        try
+        {
+            // Загружаем всех клиентов
+            var allClients = await ClientService.GetAllClientsAsync();
+
+            // Получаем клиентов, которые уже в группе
+            var groupClients = clientGroups
+                .FirstOrDefault(g => g.Group.Id == groupId)
+                ?.Clients
+                .Select(c => c.Id)
+                .ToList() ?? new List<Guid>();
+
+            // Фильтруем клиентов, которые еще не в группе
+            availableClients = allClients
+                .Where(c => !groupClients.Contains(c.Id))
+                .ToList();
+
+            showAddClientPopup = true;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            ErrorService.ShowError(ex, "Ошибка загрузки клиентов");
+        }
+    }
+
+    private async Task AddClientToGroup(Guid clientId)
+    {
+        try
+        {
+            // Создаем новый binding
+            await ClientGroupBindingService.AddClientToGroupAsync(clientId, currentGroupId);
+
+            // Обновляем UI
+            await LoadClientGroups();
+            CloseAddClientPopup();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            ErrorService.ShowError(ex, "Ошибка добавления клиента в группу");
+        }
+    }
+
+    private void CloseAddClientPopup()
+    {
+        showAddClientPopup = false;
+        availableClients = null;
+    }
+
+    private async Task ShowEditGroupPopup(Guid clientGroupId)
+    {
+        newGroup = await ClientGroupBindingService.GetGroupAsync(clientGroupId);
+        validationErrors.Clear();
+        showCreateGroupPopup = true;
+    }
+
+    private void ShowCreateGroupPopup()
+    {
+        newGroup = new ClientGroup();
+        validationErrors.Clear();
+        showCreateGroupPopup = true;
+    }
+
+    private void CloseCreateGroupPopup()
+    {
+        showCreateGroupPopup = false;
+        newGroup = new ClientGroup();
+        validationErrors.Clear();
+    }
+
+    private async Task CreateNewGroup()
+    {
+        if (ValidateGroup())
+        {
+            try
+            {
+                if (newGroup.Id == Guid.Empty)
+                {
+                    await ClientGroupBindingService.CreateAsync(new ClientGroupDto()
+                    {
+                        Name = newGroup.Name,
+                        Description = newGroup.Description,
+                        Clients = new List<Guid>()
+                    });
+                }
+                else
+                {
+                    var group = await ClientGroupBindingService.GetGroupAsync(newGroup.Id);
+                    await ClientGroupBindingService.UpdateAsync(new ClientGroupDto()
+                    {
+                        Id = newGroup.Id,
+                        Name = newGroup.Name,
+                        Description = newGroup.Description,
+                        Clients = group.ClientGroupBindings.Select(x=>x.ClientId).ToList()
+                    });
+                }
+
+                // Обновляем список групп
+                await LoadClientGroups();
+                CloseCreateGroupPopup();
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                ErrorService.ShowError(ex, "Ошибка создания группы");
+            }
+        }
+    }
+
+    private bool ValidateGroup()
+    {
+        validationErrors.Clear();
+
+        if (string.IsNullOrWhiteSpace(newGroup.Name))
+        {
+            validationErrors["Name"] = "Название группы обязательно";
+            return false;
+        }
+
+        if (newGroup.Name.Length > 100)
+        {
+            validationErrors["Name"] = "Название не должно превышать 100 символов";
+            return false;
+        }
+
+        if (!string.IsNullOrEmpty(newGroup.Description) && newGroup.Description.Length > 500)
+        {
+            validationErrors["Description"] = "Описание не должно превышать 500 символов";
+            return false;
+        }
+
+        return true;
+    }
+
+    private void NavigateToHome()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}

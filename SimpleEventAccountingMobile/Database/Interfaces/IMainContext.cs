@@ -22,6 +22,9 @@ namespace SimpleEventAccountingMobile.Database.Interfaces
 		DbSet<TrainingWalletHistory> TrainingWalletHistory { get; set; }
         DbSet<TrainingChangeSet> TrainingChangeSets { get; set; }
         DbSet<EventChangeSet> EventChangeSets { get; set; }
+        DbSet<Setting> Settings { get; set; }
+        DbSet<ClientGroup> ClientGroups { get; set; }
+        DbSet<ClientGroupBinding> ClientGroupBindings { get; set; }
 
         int SaveChanges();
 

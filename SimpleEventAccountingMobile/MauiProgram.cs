@@ -69,6 +69,8 @@ namespace SimpleEventAccountingMobile
             builder.Services.AddSingleton<ILanguageService, LanguageService>();
             builder.Services.AddSingleton<IAppInfoService, AppInfoService>();
             builder.Services.AddSingleton<IErrorService, ErrorService>();
+            builder.Services.AddScoped<ISettingsService, SettingsService>();
+            builder.Services.AddScoped<IClientGroupBindingService, ClientGroupBindingService>();
 
             // Add Serilog logging
             builder.Logging.AddSerilog(Log.Logger, dispose: true);
@@ -140,9 +142,8 @@ namespace SimpleEventAccountingMobile
             }
             catch (Exception ex)
             {
-                // Здесь можно залогировать ошибку, если миграция не удалась
+                Log.Logger.Fatal(ex, "Unhandled Migration Exception");
                 Debug.WriteLine($"An error occurred while migrating the database: {ex.Message}");
-                // В реальном приложении используйте систему логирования
             }
         }
     }

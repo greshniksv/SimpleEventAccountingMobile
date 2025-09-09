@@ -32,6 +32,8 @@ namespace SimpleEventAccountingMobile.Database.DbModels
 
         public ICollection<TrainingChangeSet>? TrainingChangeSets { get; set; }
 
+        public ICollection<ClientGroupBinding>? ClientGroupBindings { get; set; }
+
         public static void Configure(ModelBuilder builder)
             => Configure(builder.Entity<Client>());
 
@@ -88,6 +90,12 @@ namespace SimpleEventAccountingMobile.Database.DbModels
 
             builder
                 .HasMany(e => e.TrainingChangeSets)
+                .WithOne(e => e.Client)
+                .HasForeignKey(e => e.ClientId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder
+                .HasMany(e => e.ClientGroupBindings)
                 .WithOne(e => e.Client)
                 .HasForeignKey(e => e.ClientId)
                 .OnDelete(DeleteBehavior.NoAction);
