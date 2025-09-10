@@ -1,0 +1,14 @@
+﻿.bold-name {
+    font-weight: bold;
+}
+
+.description {
+    font-size: 0.9em;
+    color: #6c757d; /* Grey color for description */
+    margin-top: 4px;
+}
+
+.action-button {
+    position: absolute;
+    right: 16px;
+}

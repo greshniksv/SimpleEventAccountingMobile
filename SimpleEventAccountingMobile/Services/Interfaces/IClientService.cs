@@ -13,6 +13,8 @@ namespace SimpleEventAccountingMobile.Services.Interfaces
 
         Task<FullClientDto?> GetClientByIdAsync(Guid clientId);
 
+        Task<List<ClientGroupInfoDto>> GetGroups(Guid clientId);
+
         Task<Guid> CreateClientAsync(FullClientDto clientDto);
 
         Task UpdateClientAsync(FullClientDto clientDto);

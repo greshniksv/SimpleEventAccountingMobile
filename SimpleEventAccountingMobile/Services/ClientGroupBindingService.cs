@@ -37,6 +37,14 @@ namespace SimpleEventAccountingMobile.Services
             return item;
         }
 
+        public async Task<List<ClientGroup>> GetGroupsAsync()
+        {
+            var items = await _context.ClientGroups
+                .Include(x => x.ClientGroupBindings)
+                .ToListAsync();
+            return items;
+        }
+
         public async Task CreateAsync(ClientGroupDto dto)
         {
             var clientGroup = new ClientGroup

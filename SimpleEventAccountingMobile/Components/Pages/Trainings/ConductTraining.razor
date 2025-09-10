@@ -4,6 +4,7 @@
 @using SimpleEventAccountingMobile.Database.DbModels
 @using SimpleEventAccountingMobile.Services.Interfaces
 @inject IErrorService ErrorService
+@inject IClientGroupBindingService ClientGroupBindingService
 
 <PageTitle>Провести тренировку</PageTitle>
 
@@ -55,6 +56,39 @@
                     <ValidationMessage For="@(() => newTraining.Date)" />
                 </div>
             </div>
+            
+            <!-- Groups Block -->
+            <div class="info-card">
+                <h2 class="section-title">Группы</h2>
+
+                @if (selectedGroups?.Any() == true)
+                {
+
+                    <div class="clients-grid">
+                        @foreach (var group in selectedGroups)
+                        {
+                            <div class="client-card">
+                                <div class="client-name">@group.Name</div>
+                                <button type="button" class="remove-button" @onclick="() => RemoveGroup(group)">
+                                    <span class="remove-icon">✕</span>
+                                </button>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <div class="empty-icon">👬</div>
+                        <p>Нет  выбранных групп</p>
+                    </div>
+                }
+
+                <button type="button" class="add-button" @onclick="(() => isShowGroups = true)">
+                    <span class="add-icon">+</span>
+                    Добавить группу
+                </button>
+            </div>
 
             <!-- Subscribed Clients Section -->
             <div class="info-card">
@@ -81,7 +115,6 @@
                             <div class="client-card @(selectableClient.IsSelected ? "selected" : "")">
                                 <label class="client-checkbox">
                                     <InputCheckbox class="chk-box" @bind-Value="selectableClient.IsSelected" />
-                                    @* <span class="checkmark"></span> *@
                                 </label>
                                 <div class="client-name">@selectableClient.Client.Name</div>
                                 <button type="button" class="remove-button" @onclick="() => RemoveAddedSubClient(selectableClient)">
@@ -152,6 +185,11 @@
     }
 </div>
 
+<SelectClientGroupPopup IsVisible="@isShowGroups"
+                        IsVisibleChanged="OnAddGroupChanged"
+                        AvailableClientGroups="availableGroups"
+                        OnClientGroupSelected="AddGroup" />
+
 <AddClientPopup IsVisible="@isAddClientModalSubVisible"
                 IsVisibleChanged="OnAddClientModalSubChanged"
                 AvailableClients="availableClientsForAdditionSub"
@@ -171,6 +209,11 @@
     private bool isLoading = true;
     private string? errorMessage;
 
+    // groups
+    private List<ClientGroup> selectedGroups;
+    private List<ClientGroup> availableGroups;
+    private bool isShowGroups = false;
+
     private bool isAddClientModalVisible = false;
     private List<Client> availableClientsForAddition = new();
 
@@ -186,6 +229,8 @@
         {
             clients = await TrainingService.GetClientsAsync();
             subscribedClients = await TrainingService.GetSubscribedClientsAsync();
+            availableGroups = await ClientGroupBindingService.GetGroupsAsync();
+            selectedGroups = new List<ClientGroup>();
 
             selectableSubscribedClients = subscribedClients.Select(c => new SelectableClient
             {
@@ -206,6 +251,18 @@
     private void GoBack()
     {
         NavigationManager.NavigateTo("/trainings");
+    }
+
+    private async Task RemoveGroup(ClientGroup group)
+    {
+        if (selectedGroups.Contains(group))
+        {
+            selectedGroups.Remove(group);
+            availableGroups.Add(group); // Add the removed group back to available groups for reuse.
+        }
+
+        await RebuildAvailableUsers();
+        await InvokeAsync(StateHasChanged);
     }
 
     private void ShowAddClientModal()
@@ -248,6 +305,37 @@
     private void OnAddClientModalSubChanged(bool visible)
     {
         isAddClientModalSubVisible = visible;
+    }
+
+    private void OnAddGroupChanged(bool visible)
+    {
+        isShowGroups = visible;
+    }
+
+    private async Task AddGroup(ClientGroup group)
+    {
+        if (selectedGroups.All(x => x.Id != group.Id))
+        {
+            selectedGroups.Add(group);
+        }
+
+        availableGroups = availableGroups.Where(c => c.Id != group.Id).ToList();
+        await RebuildAvailableUsers();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task RebuildAvailableUsers()
+    {
+        var groupIds = selectedGroups.Select(x => x.Id).ToList();
+        clients = await TrainingService.GetClientsByGroupsAsync(groupIds);
+        subscribedClients = await TrainingService.GetSubscribedClientsByGroupsAsync(groupIds);
+        addedClients = new List<Client>();
+
+        selectableSubscribedClients = subscribedClients.Select(c => new SelectableClient
+        {
+            Client = c,
+            IsSelected = false
+        }).ToList();
     }
 
     private async Task AddClientToAddedClientsSub(Client client)

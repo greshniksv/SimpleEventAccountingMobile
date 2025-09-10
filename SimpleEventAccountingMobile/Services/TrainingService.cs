@@ -89,6 +89,28 @@ namespace SimpleEventAccountingMobile.Services
             }
         }
 
+        public async Task<List<Client>> GetClientsByGroupsAsync(List<Guid> groupList)
+        {
+            _logger.LogInformation("Getting all clients");
+
+            try
+            {
+                var clients = await _dbContext.Clients
+                    .Include(x=>x.ClientGroupBindings)
+                    .Where(c => c.DeletedAt == null &&
+                                c.ClientGroupBindings.Any(b=> groupList.Contains(b.ClientGroupId)))
+                    .ToListAsync();
+
+                _logger.LogInformation("Retrieved {ClientCount} clients successfully", clients.Count);
+                return clients;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while getting clients");
+                throw;
+            }
+        }
+
         public async Task<List<TrainingDebtClient>> GetTrainingDebtClientsAsync()
         {
             _logger.LogInformation("Getting training debt clients");
@@ -146,6 +168,32 @@ namespace SimpleEventAccountingMobile.Services
                     .Include(tw => tw.Client)
                     .Select(tw => tw.Client)
                     .Where(c => c != null && c.DeletedAt == null)
+                    .Distinct()
+                    .ToListAsync() ?? new List<Client>();
+
+                _logger.LogInformation("Found {SubscribedClientCount} subscribed clients", subscribedClients.Count);
+                return subscribedClients;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while getting subscribed clients");
+                throw;
+            }
+        }
+
+        public async Task<List<Client>> GetSubscribedClientsByGroupsAsync(List<Guid> groupList)
+        {
+            _logger.LogInformation("Getting subscribed clients");
+
+            try
+            {
+                var subscribedClients = await _dbContext.TrainingWallets
+                    .Where(tw => tw.Subscription && tw.DeletedAt == null)
+                    .Include(tw => tw.Client)
+                        .ThenInclude(x=>x.ClientGroupBindings)
+                    .Select(tw => tw.Client)
+                    .Where(c => c != null && c.DeletedAt == null &&
+                                c.ClientGroupBindings.Any(b => groupList.Contains(b.ClientGroupId)))
                     .Distinct()
                     .ToListAsync() ?? new List<Client>();
 

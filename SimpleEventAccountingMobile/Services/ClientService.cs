@@ -51,6 +51,21 @@ namespace SimpleEventAccountingMobile.Services
             _logger.LogInformation("Client restored successfully: {ClientId}", clientId);
         }
 
+        public async Task<List<ClientGroupInfoDto>> GetGroups(Guid clientId)
+        {
+            var groups = await _context.ClientGroupBindings
+                .Where(x => x.ClientId == clientId)
+                .Include(x => x.ClientGroup)
+                .Select(x => x.ClientGroup).ToListAsync();
+
+            return groups.Select(x=> new ClientGroupInfoDto()
+            {
+                Id = x.Id,
+                Name = x.Name,
+                Description = x.Description
+            }).ToList();
+        }
+
         public async Task<FullClientDto?> GetClientByIdAsync(Guid clientId)
         {
             _logger.LogInformation("Getting client by ID: {ClientId}", clientId);

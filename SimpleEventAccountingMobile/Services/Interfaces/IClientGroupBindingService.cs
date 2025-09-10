@@ -7,6 +7,7 @@ namespace SimpleEventAccountingMobile.Services.Interfaces
     {
         Task<List<ClientGroupBinding>> GetAllAsync();
         Task<ClientGroup?> GetGroupAsync(Guid id);
+        Task<List<ClientGroup>> GetGroupsAsync();
         Task CreateAsync(ClientGroupDto dto);
         Task UpdateAsync(ClientGroupDto dto);
         Task AddClientToGroupAsync(Guid clientId, Guid groupId);

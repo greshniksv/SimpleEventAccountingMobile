@@ -98,6 +98,28 @@
                 </div>
             </div>
 
+            <div class="form-card">
+                <h2 class="section-title"> Группы </h2>
+                @if (groupInfoDtos != null && groupInfoDtos.Any())
+                {
+                    <ul class="group-list">
+                        @foreach (var group in groupInfoDtos)
+                        {
+                            <li class="group-item">
+                                <div class="group-header">
+                                    <h3 class="group-name">@group.Name</h3>
+                                </div>
+                                <p class="group-description">@group.Description</p>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p>Нет доступных групп.</p>
+                }
+            </div>
+
             <div class="action-buttons">
                 <button type="button" class="back-button" @onclick="Cancel">
                     <span class="back-icon">←</span>
@@ -120,6 +142,7 @@
     public string? CameFrom { get; set; }
 
     private FullClientDto clientDto = new();
+    private List<ClientGroupInfoDto> groupInfoDtos;
     private string Title = string.Empty;
     private bool IsNewClient => ClientId == Guid.Empty;
     private string? errorMessage;
@@ -141,6 +164,7 @@
             {
                 Title = "Редактировать клиента";
                 var client = await ClientService.GetClientByIdAsync(ClientId);
+                groupInfoDtos = await ClientService.GetGroups(ClientId);
 
                 if (client == null)
                 {

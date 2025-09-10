@@ -1,0 +1,106 @@
+﻿@using SimpleEventAccountingMobile.Database.DbModels
+@inject IJSRuntime JSRuntime
+
+<Modal @bind-IsVisible="IsVisible">
+    <div class="modal-header">
+        <h5 class="modal-title">Выбрать Группу Клиентов</h5>
+        <button type="button" class="btn-close" aria-label="Close" @onclick="Close"></button>
+    </div>
+    <div class="modal-body">
+        <InputText @bind-Value="SearchTerm" placeholder="Поиск по названию группы..." class="form-control mb-3" />
+        @if (isLoading)
+        {
+            <p><em>Загрузка групп клиентов...</em></p>
+        }
+        else
+        {
+            <table class="table table-hover">
+                <thead>
+                <tr>
+                    <th>Название</th>
+                    <th>Описание</th>
+                    <th>Действие</th>
+                </tr>
+                </thead>
+                <tbody>
+                @if (filteredClientGroups.Any())
+                {
+                    @foreach (var clientGroup in filteredClientGroups)
+                    {
+                        <tr>
+                            <td class="bold-name">@clientGroup.Name</td>
+                            <td class="description">@clientGroup.Description</td>
+                            <td style="position: relative;">
+                                <button class="btn btn-sm btn-primary button-icon action-button" @onclick="() => SelectClientGroup(clientGroup)">
+                                    <span class="bi bi-plus-square" aria-hidden="true"></span>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="3">Нет групп клиентов, соответствующих поиску.</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        }
+    </div>
+</Modal>
+
+@code {
+    [Parameter]
+    public bool IsVisible { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> IsVisibleChanged { get; set; }
+
+    [Parameter]
+    public List<ClientGroup> AvailableClientGroups { get; set; } = new();
+
+    [Parameter]
+    public EventCallback<ClientGroup> OnClientGroupSelected { get; set; }
+
+    private string SearchTerm { get; set; } = string.Empty;
+    private List<ClientGroup> filteredClientGroups = new();
+    private bool isLoading = false;
+
+    protected override void OnParametersSet()
+    {
+        FilterClientGroups();
+    }
+
+    private void FilterClientGroups()
+    {
+        if (string.IsNullOrWhiteSpace(SearchTerm))
+        {
+            filteredClientGroups = AvailableClientGroups;
+        }
+        else
+        {
+            filteredClientGroups = AvailableClientGroups
+                .Where(g => g.Name != null && g.Name.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+    }
+
+    private void Close()
+    {
+        IsVisible = false;
+        IsVisibleChanged.InvokeAsync(IsVisible);
+    }
+
+    private async Task SelectClientGroup(ClientGroup clientGroup)
+    {
+        await OnClientGroupSelected.InvokeAsync(clientGroup);
+        Close();
+    }
+
+    private void OnSearchTermChanged(ChangeEventArgs e)
+    {
+        SearchTerm = e.Value?.ToString() ?? string.Empty;
+        FilterClientGroups();
+    }
+}

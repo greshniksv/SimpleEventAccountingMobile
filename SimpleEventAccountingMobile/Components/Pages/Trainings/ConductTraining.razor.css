@@ -308,3 +308,17 @@ input[type="checkbox"] {
     width: 0;
     height: 0;
 }
+
+.remove-group-button {
+    background: none;
+    border: none;
+    color: #dc3545;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+    .remove-group-button:hover {
+        background-color: rgba(220, 53, 69, 0.1);
+    }

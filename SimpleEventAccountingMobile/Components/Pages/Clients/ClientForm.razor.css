@@ -265,3 +265,40 @@
         font-size: 18px;
     }
 }
+
+/* Groups Section */
+.group-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.group-item {
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    padding: 0px !important;
+}
+
+.group-header {
+    background-color: #e9ecef;
+    padding: 12px 15px;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.group-name {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.group-description {
+    padding: 8px 15px;
+    color: #666;
+    font-size: 14px;
+}
