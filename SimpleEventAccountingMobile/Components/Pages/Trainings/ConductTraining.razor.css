@@ -168,7 +168,7 @@ input[type="checkbox"]:checked + .checkmark {
 
 /* Buttons */
 .add-button {
-    background: linear-gradient(135deg, #28a745, #20c997);
+    background: linear-gradient(135deg, #0063a5, #0072bf);
     color: white;
     border: none;
     padding: 12px 15px;
@@ -183,7 +183,6 @@ input[type="checkbox"]:checked + .checkmark {
 }
 
     .add-button:hover {
-        background: linear-gradient(135deg, #218838, #1aa179);
         transform: translateY(-1px);
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }

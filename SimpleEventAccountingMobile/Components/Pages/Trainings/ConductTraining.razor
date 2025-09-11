@@ -327,9 +327,7 @@
     private async Task RebuildAvailableUsers()
     {
         var groupIds = selectedGroups.Select(x => x.Id).ToList();
-        clients = await TrainingService.GetClientsByGroupsAsync(groupIds);
         subscribedClients = await TrainingService.GetSubscribedClientsByGroupsAsync(groupIds);
-        addedClients = new List<Client>();
 
         selectableSubscribedClients = subscribedClients.Select(c => new SelectableClient
         {
