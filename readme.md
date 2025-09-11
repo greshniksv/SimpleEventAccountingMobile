@@ -7,10 +7,10 @@ dotnet ef migrations add AddChangeSet --project SimpleEventAccountingMobile --fr
 # TODO
 
 ## Client group
-- [ ] Add clients group
-- [ ] Use client group in client selection popup
-- [ ] Use client group in create training page
-- [ ] Think about create wizard for create training page
+- [x] Add clients group
+- [x] Use client group in client selection popup
+- [x] Use client group in create training page
+- [x] Think about create wizard for create training page
 
 ## Reports
 - [ ] Think about report functionality
@@ -23,7 +23,7 @@ dotnet ef migrations add AddChangeSet --project SimpleEventAccountingMobile --fr
 - [ ] Settings page
 
 ## License
-- [ ] Add settings table
+- [x] Add settings table
 - [ ] Create generator of keys
 - [ ] Create page to add key and functionality to validate
 - [ ] Validate lic key on add client
