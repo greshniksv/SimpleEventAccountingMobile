@@ -17,6 +17,7 @@ dotnet ef migrations add AddChangeSet --project SimpleEventAccountingMobile --fr
 
 
 ## Bug fixing
+- [ ] Create bug reposting page (text area for description and button to create zip file with report, and link to share)
 - [ ] Allow user to send bug report as mail
 
 ## Fix
