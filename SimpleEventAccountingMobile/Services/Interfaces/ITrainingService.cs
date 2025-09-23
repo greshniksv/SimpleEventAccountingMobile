@@ -24,5 +24,7 @@ namespace SimpleEventAccountingMobile.Services.Interfaces
         Task<List<TrainingDebtClient>> GetTrainingDebtClientsAsync();
 
         Task<List<CashDebtClient>> GetCashDebtClientsAsync();
+
+        Task FixTrainingClientsAsync();
     }
 }

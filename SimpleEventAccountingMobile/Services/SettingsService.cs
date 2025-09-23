@@ -29,11 +29,16 @@ namespace SimpleEventAccountingMobile.Services
             await _context.SaveChangesAsync();
         }
 
-        public async Task<T> GetAsync<T>(string key)
+        public async Task<T?> GetAsync<T>(string key, T? defaultValue)
             where T : struct
         {
             var setting = await _context.Settings.FirstOrDefaultAsync(s => s.Key == key);
             var type = typeof(T).AssemblyQualifiedName ?? string.Empty;
+
+            if (setting == null)
+            {
+                return defaultValue;
+            }
 
             if (setting == null || !type.Equals(setting.Type))
             {

@@ -101,6 +101,7 @@ namespace SimpleEventAccountingMobile
             
             // 2. Применяем миграции
             ApplyMigrations(app.Services);
+            FixData(app.Services);
 
             // 3. Возвращаем собранное приложение
             return app;
@@ -121,6 +122,21 @@ namespace SimpleEventAccountingMobile
 
             // Помечаем как обработанную
             e.SetObserved();
+        }
+
+        private static void FixData(IServiceProvider services)
+        {
+            using var scope = services.CreateScope();
+
+            try
+            {
+                var training = scope.ServiceProvider.GetRequiredService<ITrainingService>();
+                training.FixTrainingClientsAsync().Wait();
+            }
+            catch (Exception ex)
+            {
+                Log.Logger.Fatal(ex, "Unhandled FIX Migration Exception");
+            }
         }
 
         private static void ApplyMigrations(IServiceProvider services)

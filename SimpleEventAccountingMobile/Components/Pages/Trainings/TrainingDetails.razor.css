@@ -14,9 +14,9 @@
     padding: 60px 20px;
 }
 
-.loading-container.small {
-    padding: 40px 20px;
-}
+    .loading-container.small {
+        padding: 40px 20px;
+    }
 
 .spinner {
     width: 40px;
@@ -28,12 +28,12 @@
     margin-bottom: 16px;
 }
 
-.spinner.small {
-    width: 24px;
-    height: 24px;
-    border-width: 2px;
-    margin-bottom: 12px;
-}
+    .spinner.small {
+        width: 24px;
+        height: 24px;
+        border-width: 2px;
+        margin-bottom: 12px;
+    }
 
 .loading-text {
     color: #666;
@@ -42,8 +42,13 @@
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* Header */
@@ -154,11 +159,11 @@
     transition: all 0.2s ease;
 }
 
-.participant-card:hover {
-    background: #f0f8ff;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
+    .participant-card:hover {
+        background: #f0f8ff;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
 
 .back-button {
     background: linear-gradient(135deg, #6c757d, #5a6268);
@@ -248,4 +253,24 @@
         background: linear-gradient(135deg, #771218, #b41d26);
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+.participant-absent {
+    background-color: #ffc9c9
+}
+
+    .participant-absent:hover {
+        background: #ffc9c9;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+.participant-sub {
+    background-color: #d6ffe3;
+}
+
+    .participant-sub:hover {
+        background: #d6ffe3;
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }

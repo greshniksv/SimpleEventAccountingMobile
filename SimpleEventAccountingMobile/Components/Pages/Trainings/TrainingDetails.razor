@@ -62,10 +62,24 @@
             else
             {
                 <div class="participants-grid">
-                    @foreach (var participant in participants)
+                    @foreach (var participant in participants.Where(x => x is { IsParticipate: false, IsSubscriber: true }))
+                    {
+                        <div class="participant-card participant-absent">
+                            <div class="participant-name">@participant.Client?.Name</div>
+                        </div>
+                    }
+
+                    @foreach (var participant in participants.Where(x => x is { IsParticipate: true, IsSubscriber: true }))
+                    {
+                        <div class="participant-card participant-sub">
+                            <div class="participant-name">@participant.Client?.Name</div>
+                        </div>
+                    }
+
+                    @foreach (var participant in participants.Where(x => x is { IsParticipate: true, IsSubscriber: false }))
                     {
                         <div class="participant-card">
-                            <div class="participant-name">@participant.Client.Name</div>
+                            <div class="participant-name">@participant.Client?.Name</div>
                         </div>
                     }
                 </div>
@@ -91,7 +105,7 @@
     public Guid TrainingId { get; set; }
 
     private Training? training;
-    private List<TrainingWalletHistory>? participants;
+    private List<TrainingClient>? participants;
 
     protected override async Task OnInitializedAsync()
     {
@@ -100,10 +114,7 @@
             training = await TrainingService.GetTrainingByIdAsync(TrainingId);
             if (training != null)
             {
-                participants = training.TrainingWalletHistory
-                    ?.Where(th => th.Date <= training.Date)
-                    .OrderBy(th => th.Date)
-                    .ToList();
+                participants = training.TrainingClients?.ToList() ?? new List<TrainingClient>();
             }
         }
         catch (Exception ex)

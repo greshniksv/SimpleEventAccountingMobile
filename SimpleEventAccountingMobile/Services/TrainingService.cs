@@ -10,12 +10,95 @@ namespace SimpleEventAccountingMobile.Services
     public class TrainingService : ITrainingService
     {
         private readonly IMainContext _dbContext;
+        private readonly ISettingsService _settingsService;
         private readonly ILogger<TrainingService> _logger;
 
-        public TrainingService(IMainContext dbContext, ILogger<TrainingService> logger)
+        public TrainingService(IMainContext dbContext, ILogger<TrainingService> logger, ISettingsService settingsService)
         {
             _dbContext = dbContext;
             _logger = logger;
+            _settingsService = settingsService;
+        }
+
+        public async Task FixTrainingClientsAsync()
+        {
+            var fix = await _settingsService.GetAsync<bool>("_FixTrainingClients", null);
+            if (fix == null)
+            {
+                await _settingsService.AddAsync("_FixTrainingClients", true);
+            }
+
+            if (fix == true)
+            {
+                _logger.LogInformation("_FixTrainingClients already applied");
+                return;
+            }
+
+            await using var transaction = await _dbContext.BeginTransactionAsync();
+
+            try
+            {
+                // Шаг 1: Добавить отсутствующие клиентов и тренировки в TrainingClients, если они не существуют.
+                var trainingChangeSets = await _dbContext.TrainingChangeSets.ToListAsync();
+
+                // Получаем все уже существующие пары (ClientId, TrainingId)
+                var existingTrainingClientIds = await _dbContext.TrainingClients
+                    .Select(tc => new { tc.ClientId, tc.TrainingId })
+                    .ToListAsync();
+
+                foreach (var tcs in trainingChangeSets)
+                {
+                    if (!existingTrainingClientIds.Any(e => e.ClientId == tcs.ClientId && e.TrainingId == tcs.TrainingId))
+                    {
+                        _dbContext.TrainingClients.Add(new TrainingClient
+                        {
+                            ClientId = tcs.ClientId,
+                            TrainingId = tcs.TrainingId,
+                            IsParticipate = true,
+                            IsSubscriber = false
+                        });
+                    }
+                }
+
+                await _dbContext.SaveChangesAsync();
+
+                // Шаг 2: Обновить IsParticipate на основе данных из TrainingWalletHistory
+                var trainingWalletHistories = await _dbContext.TrainingWalletHistory.ToListAsync();
+
+                foreach (var history in trainingWalletHistories)
+                {
+                    if (!string.IsNullOrEmpty(history.Comment) && history.Comment.Contains("Пропуск", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Если комментарий содержит "Пропуск" → IsParticipate = false
+                        var trainingClient = await _dbContext.TrainingClients
+                            .FirstOrDefaultAsync(tc => tc.ClientId == history.ClientId && tc.TrainingId == history.TrainingId);
+
+                        if (trainingClient != null)
+                        {
+                            trainingClient.IsParticipate = false;
+                        }
+                    }
+                    else
+                    {
+                        // Иначе → IsParticipate = true
+                        var trainingClient = await _dbContext.TrainingClients
+                            .FirstOrDefaultAsync(tc => tc.ClientId == history.ClientId && tc.TrainingId == history.TrainingId);
+
+                        if (trainingClient != null)
+                        {
+                            trainingClient.IsParticipate = true;
+                        }
+                    }
+                }
+
+                await _dbContext.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         public async Task<List<Training>> GetTrainingsAsync()
@@ -26,7 +109,7 @@ namespace SimpleEventAccountingMobile.Services
             {
                 var trainings = await _dbContext.Trainings
                     .Where(t => t.DeletedAt == null)
-                    .Include(t => t.TrainingWalletHistory)
+                    .Include(t => t.TrainingClients)
                     .OrderByDescending(x => x.Date)
                     .ToListAsync();
 
@@ -48,6 +131,7 @@ namespace SimpleEventAccountingMobile.Services
             {
                 var training = await _dbContext.Trainings
                     .Include(t => t.TrainingWalletHistory)
+                    .Include(t => t.TrainingClients)!
                     .ThenInclude(th => th.Client)
                     .FirstOrDefaultAsync(t => t.Id == trainingId && t.DeletedAt == null);
 
@@ -96,9 +180,9 @@ namespace SimpleEventAccountingMobile.Services
             try
             {
                 var clients = await _dbContext.Clients
-                    .Include(x=>x.ClientGroupBindings)
+                    .Include(x => x.ClientGroupBindings)
                     .Where(c => c.DeletedAt == null &&
-                                c.ClientGroupBindings.Any(b=> groupList.Contains(b.ClientGroupId)))
+                                c.ClientGroupBindings.Any(b => groupList.Contains(b.ClientGroupId)))
                     .ToListAsync();
 
                 _logger.LogInformation("Retrieved {ClientCount} clients successfully", clients.Count);
@@ -190,7 +274,7 @@ namespace SimpleEventAccountingMobile.Services
                 var subscribedClients = await _dbContext.TrainingWallets
                     .Where(tw => tw.Subscription && tw.DeletedAt == null)
                     .Include(tw => tw.Client)
-                        .ThenInclude(x=>x.ClientGroupBindings)
+                        .ThenInclude(x => x.ClientGroupBindings)
                     .Select(tw => tw.Client)
                     .Where(c => c != null && c.DeletedAt == null &&
                                 c.ClientGroupBindings.Any(b => groupList.Contains(b.ClientGroupId)))
@@ -318,12 +402,6 @@ namespace SimpleEventAccountingMobile.Services
 
             try
             {
-                // Create new training
-                training.DeletedAt = null;
-                _dbContext.Trainings.Add(training);
-                _logger.LogInformation("Created new training '{TrainingName}' with ID {TrainingId}",
-                    training.Name, training.Id);
-
                 var clientWithSubscription = await _dbContext.TrainingWallets
                     .Where(x => x.Subscription).Select(x => x.ClientId).ToListAsync();
 
@@ -333,6 +411,34 @@ namespace SimpleEventAccountingMobile.Services
                     .Where(x => clientIds.Contains(x.ClientId) || clientWithSubscription.Contains(x.ClientId)).ToListAsync();
 
                 _logger.LogInformation("Retrieved {WalletCount} wallets for processing", wallets.Count);
+
+
+                training.TrainingClients ??= new List<TrainingClient>();
+                foreach (var clientId in clientIdWithSubAbsent)
+                {
+                    training.TrainingClients.Add(new TrainingClient()
+                    {
+                        ClientId = clientId,
+                        IsParticipate = false,
+                        IsSubscriber = true
+                    });
+                }
+
+                foreach (var clientId in clientIds)
+                {
+                    training.TrainingClients.Add(new TrainingClient()
+                    {
+                        ClientId = clientId,
+                        IsParticipate = true,
+                        IsSubscriber = clientWithSubscription.Any(x => clientId == x)
+                    });
+                }
+
+                // Create new training
+                training.DeletedAt = null;
+                _dbContext.Trainings.Add(training);
+                _logger.LogInformation("Created new training '{TrainingName}' with ID {TrainingId}",
+                    training.Name, training.Id);
 
                 // Process absent subscribers
                 foreach (var clientId in clientIdWithSubAbsent)

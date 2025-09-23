@@ -13,6 +13,16 @@ namespace SimpleEventAccountingMobile.Database.DbModels
 
 		public Client? Client { get; set; }
 
+        /// <summary>
+        /// Присутствовал на тренировке
+        /// </summary>
+        public bool IsParticipate { get; set; }
+
+        /// <summary>
+        /// Под абонементом
+        /// </summary>
+        public bool IsSubscriber { get; set; }
+
         public static void Configure(ModelBuilder builder)
             => Configure(builder.Entity<TrainingClient>());
 

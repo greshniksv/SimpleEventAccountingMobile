@@ -35,10 +35,13 @@ else
         <tbody>
         @foreach (var training in trainings)
         {
+            var clientsParticipation = training.TrainingClients?.Count(x => x.IsParticipate) ?? 0;
+            var clientsAll = training.TrainingClients?.Count() ?? 0;
+
             <tr>
                 <td>@training.Name</td>
                 <td>@training.Date.ToString("dd.MM.yyyy HH:mm")</td>
-                <td>@(training.TrainingWalletHistory?.Count() ?? 0)</td>
+                <td>@clientsParticipation (@clientsAll) </td>
                 <td>
                     <button class="btn btn-sm btn-primary button-icon" @onclick="() => GoToTraining(training.Id)">
                         <span class="bi bi-postcard" aria-hidden="true"></span>
