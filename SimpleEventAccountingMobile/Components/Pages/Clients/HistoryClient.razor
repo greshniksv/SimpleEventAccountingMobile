@@ -70,7 +70,7 @@ else
                     @foreach (var entry in cashHistory.OrderByDescending(e => e.Date))
                     {
                         <tr>
-                            <td>@entry.Date.ToString("dd.MM HH:mm:ss")</td>
+                            <td>@entry.Date.ToString("dd.MM HH:mm")</td>
                             <td>@entry.Cash.ToString("#") ₽</td>
                             <td>@entry.Comment</td>
                             <td>
@@ -91,6 +91,8 @@ else
         }
     </div>
 
+    @* <button class="btn btn-light" @onclick="() => ToggleLegend(true)">❓</button> *@
+
     <div class="history-section">
         <h3>История тренировочных операций</h3>
         @if (trainingHistory == null)
@@ -103,23 +105,28 @@ else
         }
         else
         {
-            <table class="table table-striped">
+            <table class="table table-training">
                 <thead>
-                    <tr>
+                    <tr @onclick="() => ToggleLegend(true)">
                         <th>Дата</th>
-                        <th>Трен</th>
-                        <th>Проп</th>
-                        <th>Бесп</th>
-                        <th>Подп</th>
-                        <th>Коме</th>
+                        <th>🏃‍</th>
+                        <th>🚫</th>
+                        <th>🌟</th>
+                        <th>💳</th>
+                        <th>💬</th>
                         <th>Тренировка</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var entry in trainingHistory.OrderByDescending(e => e.Date))
                     {
-                        <tr>
-                            <td>@entry.Date.ToString("dd.MM HH:mm:ss")</td>
+                        var isAbsent = entry.Comment?.Contains("Пропуск") ?? false;
+                        var isReturn = entry.Comment?.Contains("Возврат") ?? false;
+                        var isVisit = entry.Comment?.Contains("Участие") ?? false;
+                        var classes = $"{(isAbsent ? "absent-mark" : "")} {(isReturn ? "return-mark" : "")} {(isVisit ? "visit-mark" : "")}";
+
+                        <tr class="@classes">
+                            <td>@entry.Date.ToString("dd.MM HH:mm")</td>
                             <td>@entry.Count.ToString("0")</td>
                             <td>@entry.Skip.ToString("0")</td>
                             <td>@entry.Free.ToString("0")</td>
@@ -143,6 +150,24 @@ else
     </div>
 }
 
+
+@if (showLegend)
+{
+    <!-- The Modal -->
+    <div id="legendModal" class="form-group modal">
+        <!-- Modal content -->
+        <div class="form-group modal-content">
+            <span class="close" @onclick="() => ToggleLegend(false)">&times;</span>
+            <h2>Легенда иконок</h2>
+            <p><strong>🏃 - Тренировки</strong></p>
+            <p><strong>🚫 - Пропуски</strong></p>
+            <p><strong>🌟 - Бесплатные</strong></p>
+            <p><strong>💳 - Абонемент</strong></p>
+            <p><strong>💬 - Комментарий</strong></p>
+        </div>
+    </div>
+}
+
 @code {
     [Parameter]
     public Guid ClientId { get; set; }
@@ -153,6 +178,8 @@ else
     private Client? client;
     private List<CashWalletHistory>? cashHistory;
     private List<TrainingWalletHistory>? trainingHistory;
+
+    private bool showLegend = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -186,6 +213,11 @@ else
         {
             ErrorService.ShowError(ex, "Ошибка загрузки страницы");
         }
+    }
+
+    private void ToggleLegend(bool show)
+    {
+        showLegend = show;
     }
 
     private void GoBack()
