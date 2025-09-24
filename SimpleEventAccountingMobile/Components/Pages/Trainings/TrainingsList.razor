@@ -52,6 +52,16 @@ else
         </tbody>
     </table>
 
+    @if (hasMoreItems)
+    {
+        <div class="action-buttons">
+            <button type="button" class="submit-button" @onclick="LoadTrainings">
+                <span class="submit-icon">↓</span>
+                Показать еще 15 тренировок
+            </button>
+        </div>
+    }
+
     <!-- Submit Button -->
     <div class="action-buttons">
         <button type="button" class="back-button" @onclick="GoHome">
@@ -67,17 +77,37 @@ else
 
 @code {
     private List<Training>? trainings;
+    private int skip = 0; // Number of items already loaded
+    private const int take = 15; // Number of items to fetch at a time
+    private bool hasMoreItems = true;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            trainings = await TrainingService.GetTrainingsAsync();
+            await LoadTrainings();
         }
         catch (Exception ex)
         {
             ErrorService.ShowError(ex, "Ошибка загрузки страницы");
         }
+    }
+
+    private async Task LoadTrainings()
+    {
+        var newTrainings = await TrainingService.GetTrainingsAsync(skip, take);
+        trainings = trainings?.Concat(newTrainings).ToList() ?? newTrainings;
+
+        if (newTrainings.Count < take)
+        {
+            hasMoreItems = false;
+        }
+        else
+        {
+            skip += take;
+        }
+
+        StateHasChanged();
     }
 
     private void GoToTraining(Guid trainingId)

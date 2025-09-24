@@ -14,10 +14,19 @@ namespace SimpleEventAccountingMobile.Database.DbModels
 
 		public Training? Training { get; set; }
 
+        /// <summary>
+        /// Дата и врема
+        /// </summary>
 		public DateTime Date { get; set; }
 
+        /// <summary>
+        /// Кол-во занятий
+        /// </summary>
 		public decimal Count { get; set; }
 
+        /// <summary>
+        /// Кол-во пропусков
+        /// </summary>
 		public decimal Skip { get; set; }
 
         /// <summary>
@@ -25,6 +34,9 @@ namespace SimpleEventAccountingMobile.Database.DbModels
         /// </summary>
         public decimal Free { get; set; }
 
+        /// <summary>
+        /// Абонемент
+        /// </summary>
         public bool Subscription { get; set; }
 
 		[MaxLength(1000)]

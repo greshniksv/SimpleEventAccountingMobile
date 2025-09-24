@@ -5,7 +5,7 @@ namespace SimpleEventAccountingMobile.Services.Interfaces
 {
     public interface ITrainingService
     {
-        Task<List<Training>> GetTrainingsAsync();
+        Task<List<Training>> GetTrainingsAsync(int skip, int take);
 
         Task<Training?> GetTrainingByIdAsync(Guid trainingId);
 

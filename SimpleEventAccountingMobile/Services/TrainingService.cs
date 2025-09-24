@@ -101,9 +101,9 @@ namespace SimpleEventAccountingMobile.Services
             }
         }
 
-        public async Task<List<Training>> GetTrainingsAsync()
+        public async Task<List<Training>> GetTrainingsAsync(int skip, int take)
         {
-            _logger.LogInformation("Getting all trainings");
+            _logger.LogInformation("Getting trainings with skip {Skip} and take {Take}", skip, take);
 
             try
             {
@@ -111,6 +111,8 @@ namespace SimpleEventAccountingMobile.Services
                     .Where(t => t.DeletedAt == null)
                     .Include(t => t.TrainingClients)
                     .OrderByDescending(x => x.Date)
+                    .Skip(skip)
+                    .Take(take)
                     .ToListAsync();
 
                 _logger.LogInformation("Retrieved {TrainingCount} trainings successfully", trainings.Count);
